@@ -13,8 +13,6 @@ export const useOverview = () => {
   }, []);
   useEffect(() => {
     void load();
-    const interval = window.setInterval(() => { void load(); }, 60000);
-    return () => window.clearInterval(interval);
   }, [load]);
   return { data, error, loading, reload: load };
 };

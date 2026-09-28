@@ -29,7 +29,7 @@ export function OverviewPage() {
     <PdfReport data={data}/>
     <div className="screen-dashboard">
     <section className="page-heading">
-      <div><p className="eyebrow">WEEKLY COMMAND CENTER</p><h1>Welcome back, Menna.</h1><p>Here&apos;s what&apos;s moving across operations this week.</p></div>
+      <div><p className="eyebrow">WEEKLY COMMAND CENTER</p><h1>Operations overview</h1><p>Here&apos;s what&apos;s moving across operations this week.</p></div>
       <div className="overview-actions">
         <button className="pdf-button" onClick={exportPdf}><Download size={16}/><span>Export PDF</span></button>
         <div className="week-chip"><CalendarDays size={17}/><span>{week.label}<small>{prettyDate(week.start)} — {prettyDate(week.end)}</small></span></div>
