@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Bug, ClipboardCheck, LayoutDashboard } from "lucide-react";
+import { Bug, ClipboardCheck, LayoutDashboard } from "lucide-react";
 import { OverviewPage } from "../features/overview/OverviewPage.js";
 import { WeeklyTasksPage } from "../features/weekly-tasks/WeeklyTasksPage.js";
 
@@ -16,7 +16,7 @@ export function App() {
       <div className="profile"><span>OP</span><div><strong>Operations</strong><small>Team workspace</small></div><button>•••</button></div>
     </aside>
     <main>
-      <header className="topbar"><div><span>Workspace</span><b>/</b><strong>Operations</strong></div><button className="icon-button"><Bell size={19}/><i /></button></header>
+      <header className="topbar"><div><span>Workspace</span><b>/</b><strong>Operations</strong></div></header>
       {page === "Weekly Tasks" ? <WeeklyTasksPage /> : <OverviewPage />}
     </main>
   </div>;
