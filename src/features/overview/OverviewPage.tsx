@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, CalendarX2, ClipboardCheck, Download, Mail, RefreshCw, ScrollText, Target, UserCheck, UserPlus, Wallet } from "lucide-react";
+import { AlertTriangle, CalendarDays, CalendarX2, CheckCircle2, ClipboardCheck, Download, Mail, RefreshCw, ScrollText, Target, UserCheck, UserPlus, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MetricCard } from "../../components/MetricCard.js";
 import { fetchWeeklyTasks } from "../../lib/api.js";
@@ -16,12 +16,17 @@ const sheetTaskCards = [
   { title: "trying open new acc", icon: UserPlus }
 ];
 
-export function OverviewPage({ refreshKey = 0 }: { refreshKey?: number }) {
+export function OverviewPage({ refreshKey = 0, onSync, syncing, syncMessage }: {
+  refreshKey?: number;
+  onSync: () => void;
+  syncing: boolean;
+  syncMessage: { text: string; error: boolean } | null;
+}) {
   const [metricDialog, setMetricDialog] = useState<{ title: string; items: OverviewMetricDetail[]; breakdown?: { good: number; bad: number; pending: number; total: number } } | null>(null);
   const [sheetTasks, setSheetTasks] = useState<WeeklyTask[] | null>(null);
   const [sheetTasksError, setSheetTasksError] = useState<string | null>(null);
   const [sheetTasksReload, setSheetTasksReload] = useState(0);
-  const [selectedTask, setSelectedTask] = useState<WeeklyTask | null>(null);
+  const [selectedTasks, setSelectedTasks] = useState<WeeklyTask[] | null>(null);
   const { data, error, loading, reload } = useOverview(refreshKey);
   useEffect(() => {
     let active = true;
@@ -49,8 +54,12 @@ export function OverviewPage({ refreshKey = 0 }: { refreshKey?: number }) {
     <section className="page-heading">
       <div><p className="eyebrow">WEEKLY COMMAND CENTER</p><h1>Operations overview</h1><p>Here&apos;s what&apos;s moving across operations this week.</p></div>
       <div className="overview-actions">
+        <button className="sync-button" onClick={onSync} disabled={syncing} aria-busy={syncing}>
+          <RefreshCw size={16} className={syncing ? "syncing" : undefined}/><span>{syncing ? "Syncing..." : "Sync Google Sheet"}</span>
+        </button>
         <button className="pdf-button" onClick={exportPdf}><Download size={16}/><span>Export PDF</span></button>
         <div className="week-chip"><CalendarDays size={17}/><span>{week.label}<small>{prettyDate(week.start)} — {prettyDate(week.end)}</small></span></div>
+        {syncMessage && <span className={`sync-status${syncMessage.error ? " error" : ""}`} role={syncMessage.error ? "alert" : "status"}>{!syncMessage.error && <CheckCircle2 size={14}/>} {syncMessage.text}</span>}
       </div>
     </section>
     <section className="metrics-grid">
@@ -63,10 +72,11 @@ export function OverviewPage({ refreshKey = 0 }: { refreshKey?: number }) {
     </section>
     <section className="metrics-grid" aria-label="Sheet task cards">
       {sheetTaskCards.map(({ title, icon: Icon }) => {
-        const task = sheetTasks?.find((item) => item.title.trim().toLowerCase().replace(/^\d+\s*/, "").replace(/\s+/g, " ").includes(title));
+        const matchingTasks = sheetTasks?.filter((item) => item.title.trim().toLowerCase().replace(/^\d+\s*/, "").replace(/\s+/g, " ").includes(title));
+        const task = matchingTasks?.[0];
         if (task) {
-          const completed = task.entries.reduce((sum, entry) => sum + entry.completed, 0);
-          return <MetricCard key={title} label={task.title} value={completed} target={task.target} icon={Icon} tone="green" subtitle={`${task.status.replaceAll("-", " ")} · ${Math.max(task.target - completed, 0)} remaining`} onClick={() => setSelectedTask(task)}/>;
+          const completed = task.sheetCompleted ?? task.entries.reduce((sum, entry) => sum + entry.completed, 0);
+          return <MetricCard key={title} label={task.title} value={completed} target={task.target} icon={Icon} tone="green" subtitle={`${task.status.replaceAll("-", " ")} · ${Math.max(task.target - completed, 0)} remaining`} onClick={() => setSelectedTasks(matchingTasks ?? [task])}/>;
         }
         return <div className="metric-card" key={title} aria-label={`${title}: ${sheetTasksError ? "sheet data unavailable" : sheetTasks ? "not on sheet" : "loading"}`}>
           <div className="metric-icon green"><Icon size={20}/></div>
@@ -78,6 +88,6 @@ export function OverviewPage({ refreshKey = 0 }: { refreshKey?: number }) {
     <MonthlyPlanSummary/>
     </div>
     {metricDialog && <MetricDetailsDialog title={metricDialog.title} items={metricDialog.items} breakdown={metricDialog.breakdown} onClose={() => setMetricDialog(null)}/>} 
-    {selectedTask && <TaskDetailsDialog task={selectedTask} onClose={() => setSelectedTask(null)}/>}
+    {selectedTasks && selectedTasks.length > 0 && <TaskDetailsDialog task={selectedTasks[0]!} weekTasks={selectedTasks} onClose={() => setSelectedTasks(null)}/>}
   </div>;
 }

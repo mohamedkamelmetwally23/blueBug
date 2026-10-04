@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bug, CheckCircle2, ClipboardCheck, LayoutDashboard, RefreshCw } from "lucide-react";
+import { Bug, ClipboardCheck, LayoutDashboard } from "lucide-react";
 import { OverviewPage } from "../features/overview/OverviewPage.js";
 import { WeeklyTasksPage } from "../features/weekly-tasks/WeeklyTasksPage.js";
 import { syncGoogleSheet } from "../lib/api.js";
@@ -21,16 +21,16 @@ export function App() {
       setSyncRevision((revision) => revision + 1);
       const failureCount = result.failures.length;
       const failureDetails = result.failures.slice(0, 2)
-        .map(({ row, message }) => `السطر ${row}: ${message}`)
-        .join("؛ ");
+        .map(({ row, message }) => `Row ${row}: ${message}`)
+        .join("; ");
       setSyncMessage({
         text: failureCount
-          ? `تمت مزامنة ${result.synced} مهمة، مع وجود ${failureCount} أخطاء. ${failureDetails}${failureCount > 2 ? `؛ وأخطاء أخرى: ${failureCount - 2}` : ""}`
-          : `اكتملت المزامنة بنجاح: ${result.synced} مهمة.`,
+          ? `Synced ${result.synced} tasks with ${failureCount} errors. ${failureDetails}${failureCount > 2 ? `; and ${failureCount - 2} more` : ""}`
+          : `Sync completed successfully: ${result.synced} tasks.`,
         error: failureCount > 0
       });
     } catch (reason: unknown) {
-      setSyncMessage({ text: reason instanceof Error ? reason.message : "فشلت مزامنة الشيت.", error: true });
+      setSyncMessage({ text: reason instanceof Error ? reason.message : "Google Sheets sync failed.", error: true });
     } finally {
       setSyncing(false);
     }
@@ -44,14 +44,13 @@ export function App() {
     <main>
       <header className="topbar">
         <div className="topbar-breadcrumb"><span>Workspace</span><b>/</b><strong>Operations</strong></div>
-        <div className="topbar-sync">
-          {syncMessage && <span className={`sync-status${syncMessage.error ? " error" : ""}`} role={syncMessage.error ? "alert" : "status"}>{!syncMessage.error && <CheckCircle2 size={14}/>} {syncMessage.text}</span>}
-          <button className="sync-button" onClick={() => void startSheetSync()} disabled={syncing} aria-busy={syncing}>
-            <RefreshCw size={16} className={syncing ? "syncing" : undefined}/><span>{syncing ? "جاري المزامنة..." : "مزامنة الشيت"}</span>
-          </button>
-        </div>
       </header>
-      {page === "Weekly Tasks" ? <WeeklyTasksPage refreshKey={syncRevision}/> : <OverviewPage refreshKey={syncRevision}/>}
+      {page === "Weekly Tasks" ? <WeeklyTasksPage refreshKey={syncRevision}/> : <OverviewPage
+        refreshKey={syncRevision}
+        onSync={() => void startSheetSync()}
+        syncing={syncing}
+        syncMessage={syncMessage}
+      />}
     </main>
   </div>;
 }
