@@ -4,7 +4,6 @@ import { MetricCard } from "../../components/MetricCard.js";
 import type { OverviewMetricDetail } from "../../types/contracts.js";
 import { MetricDetailsDialog } from "./MetricDetailsDialog.js";
 import { MonthlyPlanSummary } from "./MonthlyPlanSummary.js";
-import { OperationalInsights } from "./OperationalInsights.js";
 import { PdfReport } from "./PdfReport.js";
 import { useOverview } from "./useOverview.js";
 
@@ -45,7 +44,6 @@ export function OverviewPage() {
       <MetricCard label="Target active account" value={data.output.targetActiveAccount.completed} target={data.output.targetActiveAccount.target} icon={Target} tone="violet" showTarget={false} subtitle="Actual results from Notes" onClick={() => setMetricDialog({ title: "Target active account", items: data.metricDetails.targetActiveAccount })}/>
     </section>
     <MonthlyPlanSummary/>
-    <OperationalInsights data={data}/>
     </div>
     {metricDialog && <MetricDetailsDialog title={metricDialog.title} items={metricDialog.items} breakdown={metricDialog.breakdown} onClose={() => setMetricDialog(null)}/>} 
   </div>;
