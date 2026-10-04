@@ -57,3 +57,10 @@ export const fetchWeeklyTasks = async (): Promise<WeeklyTasksResponse> => {
   if (!response.ok) throw await readError(response);
   return response.json() as Promise<WeeklyTasksResponse>;
 };
+
+export interface GoogleSheetsSyncResult { synced: number; failures: Array<{ row: number; message: string }>; }
+export const syncGoogleSheet = async (): Promise<GoogleSheetsSyncResult> => {
+  const response = await fetch(`${API_URL}/google-sheets/sync`, { method: "POST" });
+  if (!response.ok) throw await readError(response);
+  return response.json() as Promise<GoogleSheetsSyncResult>;
+};

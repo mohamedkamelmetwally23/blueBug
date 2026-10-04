@@ -9,13 +9,21 @@ import { emptyFilters, filterTasks, paginateTasks, TASKS_PER_PAGE, type TaskFilt
 
 const date = (value: string) => new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
 
-export function WeeklyTasksPage() {
+export function WeeklyTasksPage({ refreshKey = 0 }: { refreshKey?: number }) {
   const [data, setData] = useState<WeeklyTasksResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<TaskFilters>(emptyFilters);
   const [page, setPage] = useState(1);
   const [selectedTask, setSelectedTask] = useState<WeeklyTask | null>(null);
-  useEffect(() => { void fetchWeeklyTasks().then(setData).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not load tasks")); }, []);
+  useEffect(() => {
+    let active = true;
+    setError(null);
+    setData(null);
+    void fetchWeeklyTasks()
+      .then((result) => { if (active) setData(result); })
+      .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Could not load tasks"); });
+    return () => { active = false; };
+  }, [refreshKey]);
   const filteredTasks = useMemo(() => filterTasks(data?.tasks ?? [], filters), [data, filters]);
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / TASKS_PER_PAGE));
   const activePage = Math.min(page, totalPages);

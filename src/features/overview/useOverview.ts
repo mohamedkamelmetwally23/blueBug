@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { OverviewResponse } from "../../types/contracts.js";
 import { fetchOverview } from "../../lib/api.js";
 
-export const useOverview = () => {
+export const useOverview = (refreshKey = 0) => {
   const [data, setData] = useState<OverviewResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,6 @@ export const useOverview = () => {
   }, []);
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, refreshKey]);
   return { data, error, loading, reload: load };
 };
-
