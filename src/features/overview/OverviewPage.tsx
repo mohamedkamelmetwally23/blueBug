@@ -5,9 +5,9 @@ import { fetchWeeklyTasks } from "../../lib/api.js";
 import type { OverviewMetricDetail, WeeklyTask } from "../../types/contracts.js";
 import { MetricDetailsDialog } from "./MetricDetailsDialog.js";
 import { MonthlyPlanSummary } from "./MonthlyPlanSummary.js";
-import { PdfReport } from "./PdfReport.js";
 import { useOverview } from "./useOverview.js";
 import { TaskDetailsDialog } from "../weekly-tasks/TaskDetailsDialog.js";
+import { totalNumDone } from "./weekTaskProgress.js";
 
 const prettyDate = (date: string) => new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(date));
 const sheetTaskCards = [
@@ -49,7 +49,6 @@ export function OverviewPage({ refreshKey = 0, onSync, syncing, syncMessage }: {
   };
 
   return <div className="overview-page">
-    <PdfReport data={data}/>
     <div className="screen-dashboard">
     <section className="page-heading">
       <div><p className="eyebrow">WEEKLY COMMAND CENTER</p><h1>Operations overview</h1><p>Here&apos;s what&apos;s moving across operations this week.</p></div>
@@ -65,7 +64,7 @@ export function OverviewPage({ refreshKey = 0, onSync, syncing, syncMessage }: {
     <section className="metrics-grid">
       <MetricCard label="Scripts completed" value={data.output.scripts.completed} target={data.output.scripts.target} icon={ScrollText} tone="green" onClick={() => setMetricDialog({ title: "Scripts completed", items: data.metricDetails.scripts })}/>
       <MetricCard label="Emails completed" value={data.output.emails.completed} target={data.output.emails.target} icon={Mail} tone="orange" onClick={() => setMetricDialog({ title: "Emails completed", items: data.metricDetails.emails })}/>
-      <MetricCard label="Action needed" value={data.output.actionNeeded.completed} target={data.output.actionNeeded.target} icon={ClipboardCheck} tone="orange" showTarget={false} subtitle={`${data.actionBreakdown.good} good · ${data.actionBreakdown.bad} bad · ${data.actionBreakdown.pending} pending`} onClick={() => setMetricDialog({ title: "Action needed", items: data.metricDetails.actionNeeded, breakdown: data.actionBreakdown })}/>
+      <MetricCard label="Action needed" value={data.actionBreakdown.total} target={data.output.actionNeeded.target} icon={ClipboardCheck} tone="orange" showTarget={false} subtitle={`${data.actionBreakdown.good} good · ${data.actionBreakdown.bad} bad · ${data.actionBreakdown.pending} pending`} onClick={() => setMetricDialog({ title: "Action needed", items: data.metricDetails.actionNeeded, breakdown: data.actionBreakdown })}/>
       <MetricCard label="Invitation acceptance" value={data.output.invitationAcceptance.completed} target={data.output.invitationAcceptance.target} icon={UserCheck} tone="violet" showTarget={false} subtitle="Invitations checked from Notes" onClick={() => setMetricDialog({ title: "Invitation acceptance", items: data.metricDetails.invitationAcceptance })}/>
       <MetricCard label="Deactivation check" value={data.output.deactivationCheck.completed} target={data.output.deactivationCheck.target} icon={CalendarX2} tone="orange" showTarget={false} subtitle="Accounts checked from Notes" onClick={() => setMetricDialog({ title: "Deactivation date check", items: data.metricDetails.deactivationCheck })}/>
       <MetricCard label="Target active account" value={data.output.targetActiveAccount.completed} target={data.output.targetActiveAccount.target} icon={Target} tone="violet" showTarget={false} subtitle="Actual results from Notes" onClick={() => setMetricDialog({ title: "Target active account", items: data.metricDetails.targetActiveAccount })}/>
@@ -75,8 +74,8 @@ export function OverviewPage({ refreshKey = 0, onSync, syncing, syncMessage }: {
         const matchingTasks = sheetTasks?.filter((item) => item.title.trim().toLowerCase().replace(/^\d+\s*/, "").replace(/\s+/g, " ").includes(title));
         const task = matchingTasks?.[0];
         if (task) {
-          const completed = task.sheetCompleted ?? task.entries.reduce((sum, entry) => sum + entry.completed, 0);
-          return <MetricCard key={title} label={task.title} value={completed} target={task.target} icon={Icon} tone="green" subtitle={`${task.status.replaceAll("-", " ")} · ${Math.max(task.target - completed, 0)} remaining`} onClick={() => setSelectedTasks(matchingTasks ?? [task])}/>;
+          const numDone = totalNumDone(matchingTasks ?? [task]);
+          return <MetricCard key={title} label={task.title} value={numDone} target={5} icon={Icon} tone="green" showTarget={false} subtitle={`${numDone} Num Done this week`} onClick={() => setSelectedTasks(matchingTasks ?? [task])}/>;
         }
         return <div className="metric-card" key={title} aria-label={`${title}: ${sheetTasksError ? "sheet data unavailable" : sheetTasks ? "not on sheet" : "loading"}`}>
           <div className="metric-icon green"><Icon size={20}/></div>

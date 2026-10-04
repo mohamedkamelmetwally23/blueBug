@@ -1,6 +1,6 @@
 export type TaskStatus = "not-started" | "in-progress" | "completed" | "blocked";
 export interface OverviewMetric { completed: number; target: number; }
-export interface OverviewMetricDetail { id: string; task: string; owner: string; weekday: string; target: number; completed: number; remaining: number; status: TaskStatus; reason: string; clarifications?: string; noteQuantity?: boolean; accountOutcomes?: { good: number; bad: number; notFound: number; total: number }; }
+export interface OverviewMetricDetail { id: string; task: string; owner: string; weekday: string; target: number; completed: number; remaining: number; status: TaskStatus; reason: string; accountNames?: string; clarifications?: string; noteQuantity?: boolean; accountOutcomes?: { good: number; bad: number; notFound: number; total: number }; }
 export interface AttentionItem { id: string; kind: "task" | "account" | "issue"; title: string; detail: string; }
 export interface RecentIssue {
   id: string; title: string; severity: "low" | "medium" | "high" | "critical";
@@ -27,6 +27,7 @@ export interface WeeklyTask {
   dayBucket?: string; dayDate?: string;
   normalizedType?: string; remaining?: number; blockerSummary?: string;
   sheetCompleted?: number;
+  accountNames?: string;
   signals?: Array<{ type: "blocked" | "credential" | "operational" | "action" | "transition"; text: string }>;
   startDate?: string; endDate?: string; deliverable?: string; notes?: string; target: number;
   entries: Array<{ id: string; date: string; completed: number; notes?: string }>;

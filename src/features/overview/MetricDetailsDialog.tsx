@@ -10,16 +10,16 @@ export function MetricDetailsDialog({ title, items, breakdown, onClose }: { titl
     {breakdown && <><div className="outcome-summary"><div><span>Total checked</span><strong>{breakdown.total}</strong></div><div className="good"><span>Good</span><strong>{breakdown.good}</strong></div><div className="bad"><span>Bad</span><strong>{breakdown.bad}</strong></div><div className="not-found"><span>Pending</span><strong>{breakdown.pending}</strong></div></div><p className="outcome-help">Good: ✅ ☑️ ➡️ · Bad: ⛔ 🔒 🚩 · Pending: checked accounts without a result emoji.</p></>}
     <div className="metric-detail-list">{items.length ? items.map((item) => <article className={breakdown ? "daily-outcome" : item.noteQuantity ? "note-quantity-row" : undefined} key={item.id}>
       <div className="metric-detail-heading"><strong>{item.task || item.weekday}</strong><small>{item.weekday} · {item.status.replaceAll("-", " ")}</small></div>
-      <SheetFields num={item.target} done={item.completed} clarifications={item.clarifications}/>
+      <SheetFields namesOfAcc={item.accountNames} numDone={item.completed} clarifications={item.clarifications}/>
       {breakdown && <div className="daily-outcome-counts"><span className="good">Good <b>{item.accountOutcomes?.good ?? 0}</b></span><span className="bad">Bad <b>{(item.accountOutcomes?.bad ?? 0) + (item.accountOutcomes?.notFound ?? 0)}</b></span><span className="not-found">Pending <b>{Math.max(item.target - (item.accountOutcomes?.total ?? 0), 0)}</b></span></div>}
     </article>) : <p className="quiet-copy">No task details available.</p>}</div>
   </section></div>;
 }
 
-function SheetFields({ num, done, clarifications }: { num: number; done: number; clarifications: string | undefined }) {
+function SheetFields({ namesOfAcc, numDone, clarifications }: { namesOfAcc: string | undefined; numDone: number; clarifications: string | undefined }) {
   return <div className="sheet-fields">
-    <div><span>Num</span><strong>{num}</strong></div>
-    <div><span>Done</span><strong>{done}</strong></div>
+    <div><span>Names of acc</span><strong className="preserve-lines">{namesOfAcc || "—"}</strong></div>
+    <div><span>Num Done</span><strong>{numDone}</strong></div>
     <div><span>Clarifications</span><strong className="preserve-lines">{clarifications || "—"}</strong></div>
   </div>;
 }
