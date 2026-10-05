@@ -127,16 +127,17 @@
   .metric-copy strong { color:#172f48; font-size:27px; margin:3px 0 5px; line-height:1.2; }
   .metric-copy p { font-size:10px; line-height:1.5; }
   .progress-ring { flex-shrink:0; }
-  .monthly-plan { margin:24px 0 0; padding:28px; border:1px solid #dae5f0; border-radius:14px; background:#fff; color:var(--ink); }
-  .monthly-plan .eyebrow { color:#087bc1!important; }
+  .monthly-plan { margin:24px 0 0; padding:28px; border:1px solid #087bc1; border-radius:14px; background:linear-gradient(135deg,#063b70 0%,#087bc1 100%); color:#f7faf8; }
+  .monthly-plan .eyebrow { color:#bde9ff!important; }
   .monthly-plan header h2 { font-size:21px; letter-spacing:-.4px; }
+  .monthly-plan header>p:last-child,.monthly-plan-figures small { color:#cee9f7; }
   .monthly-plan-figures { gap:16px; }
-  .monthly-plan-figures article { background:#f5f8fc; padding:18px; border:1px solid #e7edf4; border-radius:10px; }
-  .monthly-plan-figures strong { color:#183b58; }
-  .monthly-plan-figures span,.monthly-plan-figures small { color:#6c7f91; }
-  .monthly-plan-icon-button { color:#6e8aa2; background:#fff; border:1px solid #dfe8f0; }
-  .budget-summary { border-color:#e3e9f1; }
-  .monthly-plan-content,.monthly-plan-state { color:#52677c; line-height:1.8; }
+  .monthly-plan-figures article { background:transparent; padding:18px; border:0; border-radius:10px; }
+  .monthly-plan-figures strong,.monthly-plan-figures span { color:#fff; }
+  .monthly-plan-icon-button { color:#fff; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.3); }
+  .budget-summary { border-color:rgba(255,255,255,.25); }
+  .budget-summary ul { color:#eef8fd; }
+  .monthly-plan-content,.monthly-plan-state { color:#eef8fd; line-height:1.8; }
   .monthly-plan-edit { background:#edf5fb; color:#24618a; box-shadow:none; }
   .task-dialog { max-height:calc(100dvh - 40px); border-radius:16px; padding:24px; }
   .metric-dialog { display:flex; flex-direction:column; overflow:hidden; width:min(800px,100%); }
