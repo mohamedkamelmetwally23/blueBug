@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, CalendarX2, CheckCircle2, ClipboardCheck, Download, Mail, RefreshCw, ScrollText, Target, UserCheck, UserPlus, Wallet } from "lucide-react";
+import { AlertTriangle, CalendarDays, CalendarX2, ClipboardCheck, Download, Mail, RefreshCw, ScrollText, Target, UserCheck, UserPlus, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MetricCard } from "../../components/MetricCard.js";
 import { fetchWeeklyTasks } from "../../lib/api.js";
@@ -16,9 +16,8 @@ const sheetTaskCards = [
   { title: "trying open new acc", icon: UserPlus }
 ];
 
-export function OverviewPage({ refreshKey = 0, onSync, syncing, syncMessage }: {
+export function OverviewPage({ refreshKey = 0, syncing, syncMessage }: {
   refreshKey?: number;
-  onSync: () => void;
   syncing: boolean;
   syncMessage: { text: string; error: boolean } | null;
 }) {
@@ -38,7 +37,7 @@ export function OverviewPage({ refreshKey = 0, onSync, syncing, syncMessage }: {
   }, [sheetTasksReload, refreshKey]);
   if (loading) return <section className="page-state"><div className="loader"/><p>Preparing your weekly overview...</p></section>;
   if (error) return <section className="page-state error"><AlertTriangle/><h2>Overview unavailable</h2><p>{error}</p><button onClick={() => void reload()}><RefreshCw size={16}/> Try again</button></section>;
-  if (!data?.week) return <section className="page-state empty"><CalendarDays/><h2>No active week yet</h2><p>Sync your weekly Google Sheet to get started.</p></section>;
+  if (!data?.week) return <section className="page-state empty"><CalendarDays/><h2>No active week yet</h2><p>The dashboard syncs from Google Sheets automatically every 5 minutes.</p>{syncMessage && <p className={`sync-status${syncMessage.error ? " error" : ""}`} role={syncMessage.error ? "alert" : "status"}>{syncMessage.text}</p>}</section>;
   const week = data.week;
 
   const exportPdf = () => {
@@ -53,12 +52,9 @@ export function OverviewPage({ refreshKey = 0, onSync, syncing, syncMessage }: {
     <section className="page-heading">
       <div><p className="eyebrow">WEEKLY COMMAND CENTER</p><h1>Operations overview</h1><p>Here&apos;s what&apos;s moving across operations this week.</p></div>
       <div className="overview-actions">
-        <button className="sync-button" onClick={onSync} disabled={syncing} aria-busy={syncing}>
-          <RefreshCw size={16} className={syncing ? "syncing" : undefined}/><span>{syncing ? "Syncing..." : "Sync Google Sheet"}</span>
-        </button>
         <button className="pdf-button" onClick={exportPdf}><Download size={16}/><span>Export PDF</span></button>
         <div className="week-chip"><CalendarDays size={17}/><span>{week.label}<small>{prettyDate(week.start)} — {prettyDate(week.end)}</small></span></div>
-        {syncMessage && <span className={`sync-status${syncMessage.error ? " error" : ""}`} role={syncMessage.error ? "alert" : "status"}>{!syncMessage.error && <CheckCircle2 size={14}/>} {syncMessage.text}</span>}
+        <span className={`sync-status${syncMessage?.error ? " error" : ""}`} role={syncMessage?.error ? "alert" : "status"}>{syncing ? "Syncing Google Sheets…" : syncMessage ? syncMessage.text : "Automatic Google Sheets sync every 5 minutes."}</span>
       </div>
     </section>
     <section className="metrics-grid">
