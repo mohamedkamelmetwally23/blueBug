@@ -16,10 +16,9 @@ const sheetTaskCards = [
   { title: "trying open new acc", icon: UserPlus }
 ];
 
-export function OverviewPage({ refreshKey = 0, syncing, syncMessage }: {
+export function OverviewPage({ refreshKey = 0, syncError }: {
   refreshKey?: number;
-  syncing: boolean;
-  syncMessage: { text: string; error: boolean } | null;
+  syncError: string | null;
 }) {
   const [metricDialog, setMetricDialog] = useState<{ title: string; items: OverviewMetricDetail[]; breakdown?: { good: number; bad: number; pending: number; total: number } } | null>(null);
   const [sheetTasks, setSheetTasks] = useState<WeeklyTask[] | null>(null);
@@ -37,7 +36,7 @@ export function OverviewPage({ refreshKey = 0, syncing, syncMessage }: {
   }, [sheetTasksReload, refreshKey]);
   if (loading) return <section className="page-state"><div className="loader"/><p>Preparing your weekly overview...</p></section>;
   if (error) return <section className="page-state error"><AlertTriangle/><h2>Overview unavailable</h2><p>{error}</p><button onClick={() => void reload()}><RefreshCw size={16}/> Try again</button></section>;
-  if (!data?.week) return <section className="page-state empty"><CalendarDays/><h2>No active week yet</h2><p>The dashboard syncs from Google Sheets automatically every 5 minutes.</p>{syncMessage && <p className={`sync-status${syncMessage.error ? " error" : ""}`} role={syncMessage.error ? "alert" : "status"}>{syncMessage.text}</p>}</section>;
+  if (!data?.week) return <section className="page-state empty"><CalendarDays/><h2>No active week yet</h2><p>Sync tasks from Google Sheets to get started.</p>{syncError && <p className="sync-status error" role="alert">{syncError}</p>}</section>;
   const week = data.week;
 
   const exportPdf = () => {
@@ -54,7 +53,7 @@ export function OverviewPage({ refreshKey = 0, syncing, syncMessage }: {
       <div className="overview-actions">
         <button className="pdf-button" onClick={exportPdf}><Download size={16}/><span>Export PDF</span></button>
         <div className="week-chip"><CalendarDays size={17}/><span>{week.label}<small>{prettyDate(week.start)} — {prettyDate(week.end)}</small></span></div>
-        <span className={`sync-status${syncMessage?.error ? " error" : ""}`} role={syncMessage?.error ? "alert" : "status"}>{syncing ? "Syncing Google Sheets…" : syncMessage ? syncMessage.text : "Automatic Google Sheets sync every 5 minutes."}</span>
+        {syncError && <span className="sync-status error" role="alert">{syncError}</span>}
       </div>
     </section>
     <section className="metrics-grid">

@@ -4,47 +4,36 @@ import { OverviewPage } from "../features/overview/OverviewPage.js";
 import { WeeklyTasksPage } from "../features/weekly-tasks/WeeklyTasksPage.js";
 import { syncGoogleSheet } from "../lib/api.js";
 
-const syncIntervalMs = 5 * 60 * 1000;
-
 const navigation = [
   ["Overview", LayoutDashboard], ["Weekly Tasks", ClipboardCheck]
 ] as const;
 
 export function App() {
   const [page, setPage] = useState("Overview");
-  const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [syncRevision, setSyncRevision] = useState(0);
   const syncInProgress = useRef(false);
   useEffect(() => {
     const refreshFromSheet = async () => {
       if (syncInProgress.current) return;
       syncInProgress.current = true;
-      setSyncing(true);
-      setSyncMessage(null);
+      setSyncError(null);
       try {
         const result = await syncGoogleSheet();
         setSyncRevision((revision) => revision + 1);
-        const failureCount = result.failures.length;
-        const failureDetails = result.failures.slice(0, 2)
-          .map(({ row, message }) => `Row ${row}: ${message}`)
-          .join("; ");
-        setSyncMessage({
-          text: failureCount
-            ? `Synced ${result.synced} tasks with ${failureCount} errors. ${failureDetails}${failureCount > 2 ? `; and ${failureCount - 2} more` : ""}`
-            : `Sync completed successfully: ${result.synced} tasks.`,
-          error: failureCount > 0
-        });
+        if (result.failures.length > 0) {
+          const failureDetails = result.failures.slice(0, 2)
+            .map(({ row, message }) => `Row ${row}: ${message}`)
+            .join("; ");
+          setSyncError(`Synced ${result.synced} tasks with ${result.failures.length} errors. ${failureDetails}${result.failures.length > 2 ? `; and ${result.failures.length - 2} more` : ""}`);
+        }
       } catch (reason: unknown) {
-        setSyncMessage({ text: reason instanceof Error ? reason.message : "Google Sheets sync failed.", error: true });
+        setSyncError(reason instanceof Error ? reason.message : "Google Sheets sync failed.");
       } finally {
         syncInProgress.current = false;
-        setSyncing(false);
       }
     };
     void refreshFromSheet();
-    const interval = window.setInterval(() => { void refreshFromSheet(); }, syncIntervalMs);
-    return () => window.clearInterval(interval);
   }, []);
   return <div className="app-shell">
     <aside className="sidebar">
@@ -58,8 +47,7 @@ export function App() {
       </header>
       {page === "Weekly Tasks" ? <WeeklyTasksPage refreshKey={syncRevision}/> : <OverviewPage
         refreshKey={syncRevision}
-        syncing={syncing}
-        syncMessage={syncMessage}
+        syncError={syncError}
       />}
     </main>
   </div>;
