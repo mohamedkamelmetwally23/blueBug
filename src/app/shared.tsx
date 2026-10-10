@@ -32,10 +32,50 @@ export function Field({
   children: ReactNode;
 }) {
   const id = useId();
+  const control = children as ReactElement<{
+    id?: string;
+    type?: string;
+    placeholder?: string;
+    readOnly?: boolean;
+  }>;
+  const supportsPlaceholder =
+    control.type === "textarea" ||
+    control.type === PasswordInput ||
+    (control.type === "input" &&
+      ["text", "email", "password", "number", "tel", "url", "search"].includes(
+        control.props.type ?? "text",
+      ));
+  const hints: Record<string, string> = {
+    "Category name": "e.g. Account management",
+    Description: "Describe this category",
+    "Full name": "Enter full name",
+    Email: "you@company.com",
+    Password: "Enter a password",
+    "Completed quantity": "Enter completed quantity",
+    "Task notes": "Add notes about this task",
+    "Account / item identifier": "Enter an account name or item ID",
+    "Entry notes": "Add notes about this entry",
+    "Num Done": "Enter the number completed",
+    "Names of acc": "Enter account names, one per line",
+    Clarifications: "Add clarifications or work notes",
+    "Required accounts": "Enter the account target",
+    "Already achieved": "Enter accounts completed so far",
+    "Received from manager (USD)": "e.g. 500.00",
+    "Current cash balance (USD)": "e.g. 250.00",
+    "Reserved funds (USD)": "e.g. 100.00",
+  };
+  const placeholder = control.props.readOnly
+    ? "Calculated automatically"
+    : (hints[label] ?? `Enter ${label.replace(/\s*\*$/, "").toLowerCase()}`);
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      {cloneElement(children as ReactElement<{ id: string }>, { id })}
+      {cloneElement(control, {
+        id,
+        ...(supportsPlaceholder
+          ? { placeholder: control.props.placeholder ?? placeholder }
+          : {}),
+      })}
     </div>
   );
 }
