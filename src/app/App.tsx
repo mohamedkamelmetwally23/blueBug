@@ -81,7 +81,7 @@ export function App() {
   if (checking)
     return (
       <div className="login">
-        <p role="status">Opening your workspaceâ€¦</p>
+        <p role="status">Opening your workspace...</p>
       </div>
     );
   if (!user) return <LoginPage onAuthenticated={setUser} />;
@@ -203,8 +203,8 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
                     : page === "Financial Reports"
                       ? "Your weekly targets, funds, and budget in one place."
                       : page === "Overview"
-                        ? "A clear view of your teamâ€™s work and results."
-                        : "Keep your teamâ€™s daily work in focus."}
+                        ? "A clear view of your team's work and results."
+                        : "Keep your team's daily work in focus."}
               </p>
             </div>
             {user.role === "coordinator" &&
@@ -256,7 +256,7 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
             {page === "Categories" && (
               <div className="cards category-grid">
                 {categories.loading ? (
-                  <p role="status">Loading categoriesâ€¦</p>
+                  <p role="status">Loading categories...</p>
                 ) : categories.data?.length ? (
                   categories.data.map((category) => (
                     <article className="card category-tile" key={category._id}>
