@@ -1,0 +1,32 @@
+:root { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --brand:#289ee8; --nav:#0b1727; --nav-active:#203d5a;
+  --accent:#68c7ff; --logo-surface:#203d5a; --logo-ink:#68c7ff;
+  --ink:#e4edf7; --muted:#a2b4c8; --line:#2c3e53;
+  --surface:#152335; --background:#0e1928;
+  --danger:#ff9b90; --good:#72dab0;
+  --surface-soft:#1a2a3e; --hover:#21354c; --blue-soft:#19354b;
+  --green-soft:#173a32; --red-soft:#40272c; --amber-soft:#40351f;
+  --label:#c2d2e4; --subtle:#a2b4c8; --border:#354a62;
+  --error-border:#6d3e43; --warning:#f3cd7c; --green:#72dab0;
+  --blue:#68c7ff; --red:#ff9b90;
+}
+body { background:var(--background); color:var(--ink); }
+.theme-toggle { flex-shrink:0; min-height:36px; font-size:12px; }
+:root[data-theme="dark"] .blue-login { background:var(--background); color:var(--ink); }
+:root[data-theme="dark"] .login-entry { background:radial-gradient(ellipse at 100% 0,#173c5b80,transparent 55%); }
+:root[data-theme="dark"] .login-card { background:var(--surface); border-color:var(--line); box-shadow:0 20px 70px #0003; }
+:root[data-theme="dark"] .login-input { background:var(--background); border-color:var(--border); color:var(--muted); }
+:root[data-theme="dark"] .login-input input { color:var(--ink); }
+:root[data-theme="dark"] .login-input:has(input:autofill) { background:#19354b; }
+:root[data-theme="dark"] .login-input input:autofill { box-shadow:0 0 0 1000px #19354b inset; }
+:root[data-theme="dark"] .login-input input:-webkit-autofill { -webkit-box-shadow:0 0 0 1000px #19354b inset; -webkit-text-fill-color:var(--ink); }
+:root[data-theme="dark"] .login-greeting { background:var(--blue-soft); border-color:var(--line); color:var(--accent); }
+:root[data-theme="dark"] :is(.login-subtitle,.login-card-eyebrow,.login-security,.login-card-note,.login-footer,.login-reveal) { color:var(--muted); }
+:root[data-theme="dark"] .login-security { border-color:var(--line); }
+:root[data-theme="dark"] .login-controls :is(.theme-toggle,.login-language) { color:var(--ink); border-color:var(--line); }
+:root[data-theme="dark"] .login-validation { color:var(--danger); }
+:root[data-theme="dark"] .login-auth-error { background:var(--red-soft); }
+@media(max-width:700px) { .theme-toggle { padding:6px 10px; min-height:32px; } }
+

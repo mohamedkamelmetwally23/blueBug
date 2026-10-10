@@ -1,0 +1,36 @@
+﻿import { chromium } from '@playwright/test';
+import fs from 'node:fs';
+const browser = await chromium.launch({headless:true,channel:'chrome'});
+const page = await browser.newPage();
+const errors=[]; page.on('pageerror',e=>errors.push(e.message));
+fs.mkdirSync('artifacts/login',{recursive:true});
+for(const width of [1440,820,390,320]) {
+ await page.setViewportSize({width,height:1000});
+ await page.goto('http://127.0.0.1:5175');
+ await page.getByRole('heading',{name:'Welcome back.'}).waitFor();
+ if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw Error(`Overflow at ${width}`);
+ await page.getByLabel('Email',{exact:true}).focus();
+ if(!(await page.locator('.reaction-email').count())) throw Error('Missing email reaction');
+ await page.getByLabel('Password',{exact:true}).focus();
+ await page.getByRole('button',{name:'Show password',exact:true}).click();
+ if(await page.getByLabel('Password',{exact:true}).getAttribute('type')!=='text') throw Error('Visibility failed');
+ await page.getByRole('button',{name:'العربية'}).click();
+ if(await page.getByRole('main').getAttribute('dir')!=='rtl') throw Error('RTL failed');
+ if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw Error(`RTL overflow at ${width}`);
+ await page.screenshot({path:`artifacts/login/ar-${width}.png`,fullPage:true});
+ await page.getByRole('button',{name:'English',exact:true}).click();
+ await page.screenshot({path:`artifacts/login/en-${width}.png`,fullPage:true});
+}
+await page.emulateMedia({reducedMotion:'reduce'});
+const animation=await page.locator('.bug-float').evaluate(el=>getComputedStyle(el).animationName);
+if(animation!=='none') throw Error('Reduced motion failed');
+await page.getByLabel('Email',{exact:true}).focus(); await page.keyboard.press('Tab');
+if(await page.locator(':focus').getAttribute('id')!=='login-password') throw Error('Keyboard order failed');
+await page.route('**/api/v1/auth/login',route=>route.fulfill({status:401,contentType:'application/json',body:JSON.stringify({error:{message:'Unknown email'}})}));
+await page.getByLabel('Email',{exact:true}).fill('someone@example.com');
+await page.getByLabel('Password',{exact:true}).fill('incorrect');
+await page.getByRole('button',{name:'Sign in',exact:true}).click();
+await page.getByRole('alert').waitFor();
+if(errors.length) throw Error(errors.join('\n'));
+console.log('Passed: four viewport widths, RTL/LTR, focus reactions, visibility, keyboard, reduced motion, and generic error feedback. Screenshots: artifacts/login');
+await browser.close();

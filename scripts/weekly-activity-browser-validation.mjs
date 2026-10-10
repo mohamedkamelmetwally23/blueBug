@@ -1,0 +1,16 @@
+﻿import { chromium } from '@playwright/test';
+const browser=await chromium.launch({headless:true,channel:'chrome'});const page=await browser.newPage();
+await page.clock.setFixedTime(new Date('2026-10-10T12:00:00+03:00'));
+await page.addInitScript(()=>sessionStorage.setItem('ops-token','test'));
+const queries=[];
+await page.route('**/api/v1/**',r=>{const u=new URL(r.request().url());if(u.pathname.endsWith('/tasks'))queries.push(u.searchParams.toString());const data=u.pathname.endsWith('/auth/me')?{id:'1',role:'employee',name:'Test',email:'test@example.com'}:u.pathname.endsWith('/categories')?[]:{items:[],total:0,page:1,limit:20};return r.fulfill({json:{data}})});
+await page.goto('http://127.0.0.1:5175/employee/tasks');await page.locator('.current-week-banner').waitFor();
+await page.getByRole('link',{name:'My Activity',exact:true}).click();await page.getByRole('link',{name:/5 Oct 2026/}).click();await page.getByRole('heading',{name:/5 Oct 2026/}).waitFor();
+if(!page.url().includes('week=2026-10-05'))throw Error('Week URL missing');
+await page.reload();await page.getByRole('heading',{name:/5 Oct 2026/}).waitFor();
+await page.getByRole('button',{name:'All weeks'}).click();await page.getByRole('link',{name:/5 Oct 2026/}).waitFor();
+await page.goBack();await page.getByRole('heading',{name:/5 Oct 2026/}).waitFor();
+if(!queries.some(q=>q.includes('from=2026-10-12')&&q.includes('to=2026-10-16')))throw Error('Current query missing');
+if(!queries.some(q=>q.includes('from=2026-10-05')&&q.includes('to=2026-10-09')&&q.includes('history=true')))throw Error('Archive query missing');
+await page.setViewportSize({width:390,height:850});await page.getByRole('button',{name:'All weeks'}).click();if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error('Overflow');
+console.log('Passed week filters, archive cards, direct URLs, reload, back and mobile.');await browser.close();
