@@ -1,4 +1,19 @@
-import { ArrowRight, CalendarDays, Tags } from "lucide-react";
+import { useState } from "react";
+import {
+  ArrowRight,
+  CalendarDays,
+  ScrollText,
+  Mail,
+  ClipboardCheck,
+  UserCheck,
+  CalendarX,
+  Target,
+  Wallet,
+  UserPlus,
+  Download,
+  Tags,
+} from "lucide-react";
+import { workingWeek, shiftDate, weekLabel } from "./weeks";
 import { statuses, type Category, type Employee, type Overview } from "./api";
 import { Empty, ErrorLine, useData } from "./shared";
 export function Employees({
@@ -100,96 +115,209 @@ export function OverviewPanel({
   revision: number;
   open: (c: Category) => void;
 }) {
-  const data = useData<Overview>("/overview", revision);
+  const [week, setWeek] = useState(() => workingWeek().start);
+  const end = shiftDate(week, 5);
+  const data = useData<Overview>(`/overview?from=${week}&to=${end}`, revision);
+  const monthly = useData<Overview>(
+    `/overview?from=${week.slice(0, 7)}-01&to=${new Date(Date.UTC(Number(week.slice(0, 4)), Number(week.slice(5, 7)), 0)).toISOString().slice(0, 10)}`,
+    revision,
+  );
   const categories = data.data?.categories ?? [];
-  const all = categories.flatMap((c) => c.statuses);
+  const presentation = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes("action"))
+      return {
+        title: "Action needed",
+        Icon: ClipboardCheck,
+        tone: "amber",
+        rank: 2,
+      };
+    if (lower.includes("script"))
+      return {
+        title: "Scripts completed",
+        Icon: ScrollText,
+        tone: "blue",
+        rank: 0,
+      };
+    if (lower.includes("email") && !lower.includes("warm"))
+      return { title: "Emails completed", Icon: Mail, tone: "amber", rank: 1 };
+    if (lower.includes("invitation"))
+      return {
+        title: "Invitation acceptance",
+        Icon: UserCheck,
+        tone: "purple",
+        rank: 3,
+      };
+    if (lower.includes("deactivation"))
+      return {
+        title: "Deactivation check",
+        Icon: CalendarX,
+        tone: "amber",
+        rank: 4,
+      };
+    if (lower.includes("target"))
+      return {
+        title: "Target active account",
+        Icon: Target,
+        tone: "purple",
+        rank: 5,
+      };
+    if (lower.includes("warm") && lower.includes("email"))
+      return { title: name, Icon: Mail, tone: "blue", rank: 6 };
+    if (lower.includes("warm"))
+      return { title: name, Icon: Wallet, tone: "blue", rank: 7 };
+    if (lower.includes("trying") || lower.includes("open"))
+      return { title: name, Icon: UserPlus, tone: "blue", rank: 8 };
+    return { title: name, Icon: Tags, tone: "blue", rank: 9 };
+  };
   return (
-    <>
+    <div className="operations-overview">
+      <div className="operations-heading">
+        <div>
+          <div className="eyebrow">WEEKLY COMMAND CENTER</div>
+          <h1>Operations overview</h1>
+          <p>Here's what's moving across operations this week.</p>
+        </div>
+        <div className="operations-tools">
+          <button className="secondary" onClick={() => window.print()}>
+            <Download size={17} />
+            Export PDF
+          </button>
+          <label className="operations-week">
+            <CalendarDays size={19} />
+            <span>
+              <strong>{weekLabel(week, end)}</strong>
+              <small>Monday &ndash; Saturday</small>
+            </span>
+            <input
+              type="date"
+              aria-label="Overview week"
+              value={week}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const day = e.target.value;
+                  const weekday = new Date(day + "T00:00:00Z").getUTCDay();
+                  setWeek(shiftDate(day, weekday === 0 ? -6 : 1 - weekday));
+                }
+              }}
+            />
+          </label>
+        </div>
+      </div>
       <ErrorLine message={data.error} />
       {data.loading ? (
-        <p role="status">Loading overview…</p>
+        <p role="status">Loading overview...</p>
       ) : (
-        <>
-          <div className="cards">
-            {categories.length ? (
-              categories.map((c) => (
-                <button
-                  className="card category-card"
-                  key={c._id}
-                  onClick={() => open(c)}
-                >
-                  <div className="card-top">
-                    <span className="category-icon">
-                      <Tags size={20} />
+        <div className="operations-grid">
+          {categories.length ? (
+            [...categories]
+              .sort(
+                (a, b) => presentation(a.name).rank - presentation(b.name).rank,
+              )
+              .map((c) => {
+                const { title, Icon, tone } = presentation(c.name);
+                const percent =
+                  c.target > 0
+                    ? Math.min(
+                        100,
+                        Math.round((c.targetedQuantity / c.target) * 100),
+                      )
+                    : undefined;
+                return (
+                  <button
+                    className="operation-metric"
+                    key={c._id}
+                    onClick={() => open(c)}
+                  >
+                    <span className={`operation-icon ${tone}`}>
+                      <Icon size={22} strokeWidth={1.8} />
                     </span>
-                    <ArrowRight size={18} />
-                  </div>
-                  <h2>{c.name}</h2>
-                  <div className="stats">
-                    <div>
-                      <strong>{c.tasks}</strong>
-                      <span>Tasks</span>
-                    </div>
-                    <div>
-                      <strong>{c.completed}</strong>
-                      <span>Completed</span>
-                    </div>
-                    <div>
-                      <strong>{c.quantity}</strong>
-                      <span>Work recorded</span>
-                    </div>
-                  </div>
-                  {c.target > 0 && (
-                    <div className="target-progress">
-                      <span>
-                        {c.targetedQuantity} / {c.target} targeted units
+                    <span className="operation-copy">
+                      <span className="operation-label">{title}</span>
+                      <span className="operation-value">
+                        {c.quantity}
+                        {c.target > 0 && <small> / {c.target}</small>}
                       </span>
-                      <progress
-                        max={c.target}
-                        value={Math.min(c.target, c.targetedQuantity)}
-                      />
-                    </div>
-                  )}
-                </button>
-              ))
-            ) : (
-              <Empty>
-                Categories and real team activity will appear once your
-                Coordinator creates work.
-              </Empty>
-            )}
-          </div>
-          <div className="charts">
-            <Bars
-              title="Tasks by Category"
-              rows={categories.map((c) => ({ label: c.name, value: c.tasks }))}
-            />
-            <Bars
-              title="Task Status Distribution"
-              rows={
-                all.length
-                  ? statuses.map((s) => ({
-                      label: s,
-                      value: all.filter((v) => v === s).length,
-                    }))
-                  : []
-              }
-            />
-            <Bars
-              title="Work Activity Trend"
-              rows={(data.data?.trend ?? []).map((d) => ({
-                label: d._id,
-                value: d.quantity,
-              }))}
-            />
-          </div>
-        </>
+                      <span className="operation-note">
+                        {c.target > 0
+                          ? c.targetedQuantity >= c.target
+                            ? "Target reached"
+                            : `${Math.max(0, c.target - c.targetedQuantity)} remaining`
+                          : `${c.completed} completed \u00b7 ${c.tasks} tasks this week`}
+                      </span>
+                    </span>
+                    {percent !== undefined && (
+                      <span
+                        className="operation-ring"
+                        role="img"
+                        aria-label={`${percent}% of target achieved`}
+                      >
+                        <svg viewBox="0 0 56 56" aria-hidden="true">
+                          <circle cx="28" cy="28" r="23" />
+                          <circle
+                            cx="28"
+                            cy="28"
+                            r="23"
+                            strokeDasharray={`${percent * 1.445} 144.5`}
+                          />
+                        </svg>
+                        <strong>{percent}%</strong>
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+          ) : (
+            <Empty>No work categories are available yet.</Empty>
+          )}
+        </div>
       )}
-      <div className="coming-soon">
-        <CalendarDays size={18} />
-        <strong>Monthly Financial Report — Coming Soon</strong>
-      </div>
-    </>
+      <section className="operations-monthly">
+        <div className="eyebrow">MONTHLY OVERVIEW</div>
+        <h2>
+          {new Intl.DateTimeFormat("en-US", {
+            month: "long",
+            year: "numeric",
+            timeZone: "UTC",
+          }).format(new Date(week + "T00:00:00Z"))}
+        </h2>
+        <p>A clear view of your team's progress this month.</p>
+        <ErrorLine message={monthly.error} />
+        <div className="operations-monthly-stats">
+          <div>
+            <strong>
+              {monthly.loading
+                ? "..."
+                : (monthly.data?.categories.reduce((n, c) => n + c.tasks, 0) ??
+                  0)}
+            </strong>
+            <span>Total tasks</span>
+          </div>
+          <div>
+            <strong>
+              {monthly.loading
+                ? "..."
+                : (monthly.data?.categories.reduce(
+                    (n, c) => n + c.completed,
+                    0,
+                  ) ?? 0)}
+            </strong>
+            <span>Completed</span>
+          </div>
+          <div>
+            <strong>
+              {monthly.loading
+                ? "..."
+                : (monthly.data?.categories.reduce(
+                    (n, c) => n + c.quantity,
+                    0,
+                  ) ?? 0)}
+            </strong>
+            <span>Work recorded</span>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 

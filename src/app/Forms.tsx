@@ -33,7 +33,9 @@ export function TaskForm({
   done: () => void;
   cancel: () => void;
 }) {
-  const [categoryId, setCategoryId] = useState(task?.categoryId ?? "");
+  const [categoryIds, setCategoryIds] = useState<string[]>(
+    task ? [task.categoryId] : [],
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   return (
@@ -41,23 +43,33 @@ export function TaskForm({
       onSubmit={async (event) => {
         event.preventDefault();
         if (busy) return;
+        if (!categoryIds.length) {
+          setError("Choose at least one category.");
+          return;
+        }
         const values = new FormData(event.currentTarget);
         setBusy(true);
         setError("");
         try {
-          await api(
-            "/tasks" + (task ? "/" + task._id : ""),
-            task ? "PUT" : "POST",
-            {
-              categoryId,
-              assignedEmployee: values.get("assignedEmployee"),
-              workDate: values.get("workDate"),
-              instructions: values.get("instructions"),
-              ...(task && task.workFormat !== "sheet"
-                ? { title: task.title, target: task.target ?? null }
-                : {}),
-            },
-          );
+          for (const categoryId of categoryIds) {
+            await api(
+              "/tasks" + (task ? "/" + task._id : ""),
+              task ? "PUT" : "POST",
+              {
+                categoryId,
+                assignedEmployee: values.get("assignedEmployee"),
+                workDate: values.get("workDate"),
+                instructions: values.get("instructions"),
+                ...(task && task.workFormat !== "sheet"
+                  ? { title: task.title, target: task.target ?? null }
+                  : {}),
+              },
+            );
+            if (!task)
+              setCategoryIds((selected) =>
+                selected.filter((id) => id !== categoryId),
+              );
+          }
           done();
         } catch (error) {
           setError((error as Error).message);
@@ -67,29 +79,41 @@ export function TaskForm({
       }}
     >
       <div className="form-grid">
-        <Field label="Category">
-          <select
-            required
-            disabled={!!task}
-            value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
-          >
-            <option value="">Choose category</option>
-            {task ? (
-              <option value={task.categoryId}>
-                {task.categorySchema.name}
-              </option>
-            ) : (
-              categories
+        {task ? (
+          <Field label="Category">
+            <input value={task.categorySchema.name} disabled />
+          </Field>
+        ) : (
+          <fieldset className="task-category-picker" disabled={busy}>
+            <legend>Categories</legend>
+            <p className="hint">
+              Choose one or more categories. Each creates a separate task.
+            </p>
+            <div className="task-category-options">
+              {categories
                 .filter((category) => category.active)
                 .map((category) => (
-                  <option key={category._id} value={category._id}>
-                    {category.name}
-                  </option>
-                ))
+                  <label className="checkbox" key={category._id}>
+                    <input
+                      type="checkbox"
+                      checked={categoryIds.includes(category._id)}
+                      onChange={(event) =>
+                        setCategoryIds((selected) =>
+                          event.target.checked
+                            ? [...selected, category._id]
+                            : selected.filter((id) => id !== category._id),
+                        )
+                      }
+                    />
+                    <span>{category.name}</span>
+                  </label>
+                ))}
+            </div>
+            {!categories.some((category) => category.active) && (
+              <p className="hint">No active categories available.</p>
             )}
-          </select>
-        </Field>
+          </fieldset>
+        )}
         <Field label="Assigned to">
           <select
             name="assignedEmployee"
@@ -135,7 +159,13 @@ export function TaskForm({
         >
           Cancel
         </button>
-        <button disabled={busy}>{busy ? "Saving..." : "Save task"}</button>
+        <button disabled={busy || !categoryIds.length}>
+          {busy
+            ? "Saving..."
+            : categoryIds.length > 1
+              ? `Save ${categoryIds.length} tasks`
+              : "Save task"}
+        </button>
       </div>
     </form>
   );

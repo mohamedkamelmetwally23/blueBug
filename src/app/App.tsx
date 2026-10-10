@@ -130,7 +130,11 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
       setModal(undefined);
     };
     window.addEventListener("popstate", change);
-    history.replaceState(null, "", pageRoute(user, page) + (page === "My Activity" ? location.search : ""));
+    history.replaceState(
+      null,
+      "",
+      pageRoute(user, page) + (page === "My Activity" ? location.search : ""),
+    );
     return () => window.removeEventListener("popstate", change);
   }, [user, page]);
   const icons: Record<string, typeof ClipboardList> = {
@@ -143,7 +147,7 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
     "Financial Reports": CalendarDays,
   };
   return (
-    <div className="shell">
+    <div className={`shell ${page === "Overview" ? "operations-shell" : ""}`}>
       <a className="skip" href="#content">
         Skip to content
       </a>
@@ -186,50 +190,55 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
       <main id="content">
         <header className="topbar">
           <span>
-            Workspace <span className="muted">/</span> <strong>{page}</strong>
+            Workspace <span className="muted">/</span>{" "}
+            <strong>{page === "Overview" ? "Operations" : page}</strong>
           </span>
           <ThemeToggle />
         </header>
         <div className="page">
-          <div className="page-heading">
-            <div>
-              <div className="eyebrow">{user.role.toUpperCase()} WORKSPACE</div>
-              <h1>{page}</h1>
-              <p>
-                {page === "My Tasks"
-                  ? "Your assigned work. One clear step at a time."
-                  : page === "Categories"
-                    ? "Define categories for your daily work."
-                    : page === "Financial Reports"
-                      ? "Your weekly targets, funds, and budget in one place."
-                      : page === "Overview"
-                        ? "A clear view of your team's work and results."
-                        : "Keep your team's daily work in focus."}
-              </p>
+          {page !== "Overview" && (
+            <div className="page-heading">
+              <div>
+                <div className="eyebrow">
+                  {user.role.toUpperCase()} WORKSPACE
+                </div>
+                <h1>{page}</h1>
+                <p>
+                  {page === "My Tasks"
+                    ? "Your assigned work. One clear step at a time."
+                    : page === "Categories"
+                      ? "Define categories for your daily work."
+                      : page === "Financial Reports"
+                        ? "Your weekly targets, funds, and budget in one place."
+                        : page === "Overview"
+                          ? "A clear view of your team's work and results."
+                          : "Keep your team's daily work in focus."}
+                </p>
+              </div>
+              {user.role === "coordinator" &&
+                ["Tasks", "Categories", "Employees"].includes(page) && (
+                  <button
+                    onClick={() =>
+                      setModal(
+                        page === "Tasks"
+                          ? { kind: "taskForm" }
+                          : page === "Employees"
+                            ? { kind: "employeeForm" }
+                            : { kind: "categoryForm" },
+                      )
+                    }
+                  >
+                    <Plus size={16} />
+                    Create{" "}
+                    {page === "Tasks"
+                      ? "Task"
+                      : page === "Employees"
+                        ? "Employee"
+                        : "Category"}
+                  </button>
+                )}
             </div>
-            {user.role === "coordinator" &&
-              ["Tasks", "Categories", "Employees"].includes(page) && (
-                <button
-                  onClick={() =>
-                    setModal(
-                      page === "Tasks"
-                        ? { kind: "taskForm" }
-                        : page === "Employees"
-                          ? { kind: "employeeForm" }
-                          : { kind: "categoryForm" },
-                    )
-                  }
-                >
-                  <Plus size={16} />
-                  Create{" "}
-                  {page === "Tasks"
-                    ? "Task"
-                    : page === "Employees"
-                      ? "Employee"
-                      : "Category"}
-                </button>
-              )}
-          </div>
+          )}
           <ErrorLine message={categories.error || employees.error} />
           {notice && (
             <p className="notice" role="status">
@@ -238,8 +247,25 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
             </p>
           )}
           <>
-            {page === "My Activity" && <WeeklyActivity revision={revision} categories={categories.data ?? []} open={(task) => setModal({ kind: "work", task })} />}
-            {page === "My Tasks" && <div className="current-week-banner"><CalendarDays size={20} /><div><strong>This week &middot; {weekLabel(workingWeek().start, workingWeek().end)}</strong><small>Monday &ndash; Friday</small></div></div>}
+            {page === "My Activity" && (
+              <WeeklyActivity
+                revision={revision}
+                categories={categories.data ?? []}
+                open={(task) => setModal({ kind: "work", task })}
+              />
+            )}
+            {page === "My Tasks" && (
+              <div className="current-week-banner">
+                <CalendarDays size={20} />
+                <div>
+                  <strong>
+                    This week &middot;{" "}
+                    {weekLabel(workingWeek().start, workingWeek().end)}
+                  </strong>
+                  <small>Monday &ndash; Friday</small>
+                </div>
+              </div>
+            )}
             {["Tasks", "My Tasks"].includes(page) && (
               <TaskList
                 key={page}
@@ -407,7 +433,11 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
               employee={false}
               employeeId={modal.employee._id}
               open={(task) => setModal({ kind: "work", task })}
-              edit={user.role === "coordinator" ? (task) => setModal({ kind: "taskForm", task }) : undefined}
+              edit={
+                user.role === "coordinator"
+                  ? (task) => setModal({ kind: "taskForm", task })
+                  : undefined
+              }
             />
           )}{" "}
           {modal.kind === "category" && (
@@ -424,7 +454,11 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
                 employee={false}
                 categoryId={modal.category._id}
                 open={(task) => setModal({ kind: "work", task })}
-                edit={user.role === "coordinator" ? (task) => setModal({ kind: "taskForm", task }) : undefined}
+                edit={
+                  user.role === "coordinator"
+                    ? (task) => setModal({ kind: "taskForm", task })
+                    : undefined
+                }
               />
             </>
           )}
@@ -433,4 +467,3 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
     </div>
   );
 }
-
