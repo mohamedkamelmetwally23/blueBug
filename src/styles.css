@@ -1837,3 +1837,15 @@ td:first-child {
   overflow-wrap: anywhere;
   cursor: pointer;
 }
+.action-result-picker {
+  margin: 0 0 18px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.action-result-picker input[type="radio"] {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+  accent-color: var(--brand);
+}

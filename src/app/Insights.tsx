@@ -13,8 +13,15 @@ import {
   Download,
   Tags,
 } from "lucide-react";
-import { workingWeek, shiftDate, weekLabel } from "./weeks";
-import { statuses, type Category, type Employee, type Overview } from "./api";
+import { shiftDate, weekLabel } from "./weeks";
+import {
+  cairoDate,
+  statuses,
+  type Category,
+  type Employee,
+  type Overview,
+} from "./api";
+import type { Report } from "./Financial";
 import { Empty, ErrorLine, useData } from "./shared";
 export function Employees({
   data,
@@ -37,8 +44,6 @@ export function Employees({
             <th>Employee</th>
             <th>Assigned</th>
             <th>Completed</th>
-            <th>Work quantity</th>
-            <th>Last activity</th>
             <th>Details</th>
           </tr>
         </thead>
@@ -58,14 +63,6 @@ export function Employees({
               </td>
               <td>{e.assigned}</td>
               <td>{e.completed}</td>
-              <td>{e.quantity}</td>
-              <td>
-                {e.lastActivity
-                  ? new Date(e.lastActivity).toLocaleString("en-GB", {
-                      timeZone: "Africa/Cairo",
-                    })
-                  : "No activity"}
-              </td>
               <td>
                 <button className="secondary" onClick={() => open(e)}>
                   View work
@@ -115,13 +112,27 @@ export function OverviewPanel({
   revision: number;
   open: (c: Category) => void;
 }) {
-  const [week, setWeek] = useState(() => workingWeek().start);
-  const end = shiftDate(week, 5);
+  const [week, setWeek] = useState(() => {
+    const today = cairoDate();
+    const weekday = new Date(today + "T00:00:00Z").getUTCDay();
+    return shiftDate(today, weekday === 0 ? -6 : 1 - weekday);
+  });
+  const workdays = 5;
+  const dailyTarget = 5;
+  const weeklyTarget = dailyTarget * workdays;
+  const end = shiftDate(week, workdays - 1);
   const data = useData<Overview>(`/overview?from=${week}&to=${end}`, revision);
-  const monthly = useData<Overview>(
-    `/overview?from=${week.slice(0, 7)}-01&to=${new Date(Date.UTC(Number(week.slice(0, 4)), Number(week.slice(5, 7)), 0)).toISOString().slice(0, 10)}`,
+  const financial = useData<Report | null>(
+    `/financial-reports/${week}`,
     revision,
   );
+  const money = (cents: number) =>
+    (cents / 100).toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   const categories = data.data?.categories ?? [];
   const presentation = (name: string) => {
     const lower = name.toLowerCase();
@@ -187,7 +198,7 @@ export function OverviewPanel({
             <CalendarDays size={19} />
             <span>
               <strong>{weekLabel(week, end)}</strong>
-              <small>Monday &ndash; Saturday</small>
+              <small>Monday &ndash; Friday</small>
             </span>
             <input
               type="date"
@@ -215,14 +226,8 @@ export function OverviewPanel({
                 (a, b) => presentation(a.name).rank - presentation(b.name).rank,
               )
               .map((c) => {
-                const { title, Icon, tone } = presentation(c.name);
-                const percent =
-                  c.target > 0
-                    ? Math.min(
-                        100,
-                        Math.round((c.targetedQuantity / c.target) * 100),
-                      )
-                    : undefined;
+                const { title, Icon, tone, rank } = presentation(c.name);
+                const hasWeeklyTarget = rank === 0 || rank === 1;
                 return (
                   <button
                     className="operation-metric"
@@ -236,34 +241,15 @@ export function OverviewPanel({
                       <span className="operation-label">{title}</span>
                       <span className="operation-value">
                         {c.quantity}
-                        {c.target > 0 && <small> / {c.target}</small>}
+                        {hasWeeklyTarget && <small> / {weeklyTarget}</small>}
                       </span>
-                      <span className="operation-note">
-                        {c.target > 0
-                          ? c.targetedQuantity >= c.target
-                            ? "Target reached"
-                            : `${Math.max(0, c.target - c.targetedQuantity)} remaining`
-                          : `${c.completed} completed \u00b7 ${c.tasks} tasks this week`}
-                      </span>
+                      {hasWeeklyTarget && (
+                        <span className="operation-note">
+                          {Math.max(0, weeklyTarget - c.quantity)} remaining |{" "}
+                          {dailyTarget} per day
+                        </span>
+                      )}
                     </span>
-                    {percent !== undefined && (
-                      <span
-                        className="operation-ring"
-                        role="img"
-                        aria-label={`${percent}% of target achieved`}
-                      >
-                        <svg viewBox="0 0 56 56" aria-hidden="true">
-                          <circle cx="28" cy="28" r="23" />
-                          <circle
-                            cx="28"
-                            cy="28"
-                            r="23"
-                            strokeDasharray={`${percent * 1.445} 144.5`}
-                          />
-                        </svg>
-                        <strong>{percent}%</strong>
-                      </span>
-                    )}
                   </button>
                 );
               })
@@ -273,49 +259,37 @@ export function OverviewPanel({
         </div>
       )}
       <section className="operations-monthly">
-        <div className="eyebrow">MONTHLY OVERVIEW</div>
-        <h2>
-          {new Intl.DateTimeFormat("en-US", {
-            month: "long",
-            year: "numeric",
-            timeZone: "UTC",
-          }).format(new Date(week + "T00:00:00Z"))}
-        </h2>
-        <p>A clear view of your team's progress this month.</p>
-        <ErrorLine message={monthly.error} />
-        <div className="operations-monthly-stats">
-          <div>
-            <strong>
-              {monthly.loading
-                ? "..."
-                : (monthly.data?.categories.reduce((n, c) => n + c.tasks, 0) ??
-                  0)}
-            </strong>
-            <span>Total tasks</span>
-          </div>
-          <div>
-            <strong>
-              {monthly.loading
-                ? "..."
-                : (monthly.data?.categories.reduce(
-                    (n, c) => n + c.completed,
-                    0,
-                  ) ?? 0)}
-            </strong>
-            <span>Completed</span>
-          </div>
-          <div>
-            <strong>
-              {monthly.loading
-                ? "..."
-                : (monthly.data?.categories.reduce(
-                    (n, c) => n + c.quantity,
-                    0,
-                  ) ?? 0)}
-            </strong>
-            <span>Work recorded</span>
-          </div>
-        </div>
+        <div className="eyebrow">WEEKLY FINANCIAL OVERVIEW</div>
+        <h2>{weekLabel(week, end)}</h2>
+        <p>Funds for the selected week.</p>
+        <ErrorLine message={financial.error} />
+        {financial.loading ? (
+          <p role="status">Loading financial report...</p>
+        ) : financial.error ? null : financial.data ? (
+          <>
+            <div className="operations-monthly-stats">
+              <div>
+                <strong>{money(financial.data.receivedCents)}</strong>
+                <span>Received</span>
+              </div>
+              <div>
+                <strong>{money(financial.data.balanceCents)}</strong>
+                <span>Balance</span>
+              </div>
+              <div>
+                <strong>{money(financial.data.reservedCents)}</strong>
+                <span>Reserved</span>
+              </div>
+            </div>
+            {financial.data.budgetSummary && (
+              <p className="financial-budget-summary">
+                {financial.data.budgetSummary}
+              </p>
+            )}
+          </>
+        ) : (
+          <p>No financial report saved for this week.</p>
+        )}
       </section>
     </div>
   );

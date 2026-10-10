@@ -16,6 +16,7 @@ export function TaskSheet({
   refresh: () => void;
   done: () => void;
 }) {
+  const isActionNeeded = /action\s+needed/i.test(task.categorySchema.name);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
@@ -61,6 +62,9 @@ export function TaskSheet({
                   ? null
                   : Number(values.get("numDone")),
               notes: values.get("notes"),
+              ...(isActionNeeded
+                ? { resultStatus: values.get("resultStatus") ?? "" }
+                : {}),
             });
             refresh();
             setSaved(true);
@@ -114,6 +118,24 @@ export function TaskSheet({
               />
             </Field>
           </div>
+          {isActionNeeded && (
+            <fieldset className="action-result-picker">
+              <legend>Result</legend>
+              <div className="actions">
+                {["Good", "Bad", "Pending"].map((result) => (
+                  <label className="checkbox" key={result}>
+                    <input
+                      type="radio"
+                      name="resultStatus"
+                      value={result}
+                      defaultChecked={task.resultStatus === result}
+                    />
+                    {result}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
           <Field label="Names of acc">
             <textarea
               name="accountNames"

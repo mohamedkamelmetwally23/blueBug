@@ -12,7 +12,7 @@ import {
 import { api, cairoDate } from "./api";
 import { Field, ErrorLine, useData } from "./shared";
 
-type Report = {
+export type Report = {
   weekStart: string;
   requiredAccounts: number;
   achievedAccounts: number;
