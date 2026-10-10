@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { App } from "./App";
 let role = "employee";
 let entryFails = false;
@@ -93,13 +93,13 @@ describe("role workspaces", () => {
     expect(
       Array.from(nav.querySelectorAll("a")).map((a) => a.textContent),
     ).toEqual([...names]);
-    expect(location.pathname).toBe(
+    await waitFor(() => expect(location.pathname).toBe(
       r === "employee"
         ? "/employee/tasks"
         : r === "manager"
           ? "/manager/overview"
           : "/coordinator/tasks",
-    );
+    ));
   });
   it("renders dynamic entry drawer and preserves values on failure", async () => {
     role = "employee";
@@ -153,6 +153,6 @@ describe("role workspaces", () => {
       ).value,
     ).toBe("14");
     expect(screen.queryByLabelText("Target cost")).toBeNull();
-    expect(location.pathname).toBe("/coordinator/monthly-financial-report");
+    await waitFor(() => expect(location.pathname).toBe("/coordinator/monthly-financial-report"));
   });
 });

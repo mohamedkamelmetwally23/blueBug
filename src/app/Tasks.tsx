@@ -35,7 +35,7 @@ export function TaskList({
     categoryId: categoryId ?? "",
     employeeId: employeeId ?? "",
     status: "",
-    day: "",
+    weekday: "",
     from: "",
     to: "",
   });
@@ -113,12 +113,11 @@ export function TaskList({
             </Field>
           </>
         ) : (
-          <Field label="Work date">
-            <input
-              type="date"
-              value={filters.day}
-              onChange={(e) => filter("day", e.target.value)}
-            />
+          <Field label="Day">
+            <select value={filters.weekday} onChange={(e) => filter("weekday", e.target.value)}>
+              <option value="">All days</option>
+              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(day => <option key={day} value={day}>{day}</option>)}
+            </select>
           </Field>
         )}
       </div>

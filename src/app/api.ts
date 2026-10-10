@@ -63,6 +63,9 @@ export type Employee = {
   statuses: string[];
 };
 export type CategoryStats = Category & {
+  goodResults?: number;
+  badResults?: number;
+  pendingResults?: number;
   tasks: number;
   completed: number;
   quantity: number;
@@ -72,7 +75,7 @@ export type CategoryStats = Category & {
 };
 export type Overview = {
   categories: CategoryStats[];
-  trend: { _id: string; quantity: number }[];
+  trend: { _id: string; quantity: number; categories?: { categoryId: string; quantity: number }[] }[];
 };
 export const statuses = ["Not Started", "In Progress", "Completed"];
 const pending = new Map<string, Promise<unknown>>();

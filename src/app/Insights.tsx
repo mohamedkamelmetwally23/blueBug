@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
@@ -12,8 +12,11 @@ import {
   UserPlus,
   Download,
   Tags,
+  ChartNoAxesColumnIncreasing,
 } from "lucide-react";
-import { shiftDate, weekLabel } from "./weeks";
+import { OverviewCharts } from "./OverviewCharts";
+import { ThemeToggle } from "./ThemeToggle";
+import { shiftDate, weekLabel, workingWeek } from "./weeks";
 import {
   cairoDate,
   statuses,
@@ -110,20 +113,33 @@ export function OverviewPanel({
   open,
 }: {
   revision: number;
-  open: (c: Category) => void;
+  open: (c: Category, range: { start: string; end: string }) => void;
 }) {
-  const [week, setWeek] = useState(() => {
-    const today = cairoDate();
-    const weekday = new Date(today + "T00:00:00Z").getUTCDay();
-    return shiftDate(today, weekday === 0 ? -6 : 1 - weekday);
-  });
-  const workdays = 5;
+  const dateLabel = weekLabel;
+  const [today, setToday] = useState(cairoDate);
+  const [period, setPeriod] = useState("current-week");
+  useEffect(() => {
+    const sync = () => setToday(cairoDate());
+    const timer = window.setInterval(sync, 30000);
+    window.addEventListener("focus", sync);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", sync); };
+  }, []);
+  const current = workingWeek(today);
+  const monthStart = today.slice(0, 7) + "-01";
+  const previousMonthEnd = shiftDate(monthStart, -1);
+  const week = period === "last-month" ? previousMonthEnd.slice(0, 7) + "-01" : shiftDate(current.start, period === "last-week" ? -7 : period === "2-weeks-ago" ? -14 : period === "3-weeks-ago" ? -21 : 0);
+  const end = period === "last-month" ? previousMonthEnd : shiftDate(week, 4);
+  let workdays = 0;
+  for (let date = week; date <= end; date = shiftDate(date, 1)) {
+    const day = new Date(date + "T00:00:00Z").getUTCDay();
+    if (day > 0 && day < 6) workdays++;
+  }
   const dailyTarget = 5;
   const weeklyTarget = dailyTarget * workdays;
-  const end = shiftDate(week, workdays - 1);
+  const financialWeek = period === "last-month" ? workingWeek(shiftDate(end, -2)).start : week;
   const data = useData<Overview>(`/overview?from=${week}&to=${end}`, revision);
   const financial = useData<Report | null>(
-    `/financial-reports/${week}`,
+    `/financial-reports/${financialWeek}`,
     revision,
   );
   const money = (cents: number) =>
@@ -163,7 +179,7 @@ export function OverviewPanel({
       return {
         title: "Deactivation check",
         Icon: CalendarX,
-        tone: "amber",
+        tone: "green",
         rank: 4,
       };
     if (lower.includes("target"))
@@ -183,41 +199,39 @@ export function OverviewPanel({
   };
   return (
     <div className="operations-overview">
+      <div className="overview-report-heading">
+        <div><span>BLUE BUG OPERATIONS</span><h1>Operations Report</h1><p>{dateLabel(week, end)}</p></div>
+        <div className="overview-report-meta"><strong>{period === "last-month" ? "Monthly overview" : "Weekly overview"}</strong><span>Generated {today}</span></div>
+      </div>
       <div className="operations-heading">
         <div>
-          <div className="eyebrow">WEEKLY COMMAND CENTER</div>
-          <h1>Operations overview</h1>
-          <p>Here's what's moving across operations this week.</p>
+          <span className="operations-heading-icon" aria-hidden="true"><ChartNoAxesColumnIncreasing size={32} /></span>
+          <h1>{"Operations overview"}</h1>
+          <p>{"Track operations across your selected period."}</p>
         </div>
         <div className="operations-tools">
+          <ThemeToggle />
           <button className="secondary" onClick={() => window.print()}>
             <Download size={17} />
-            Export PDF
+            {"Export PDF"}
           </button>
-          <label className="operations-week">
+          <div className="operations-week">
             <CalendarDays size={19} />
             <span>
-              <strong>{weekLabel(week, end)}</strong>
-              <small>Monday &ndash; Friday</small>
+              <strong>{dateLabel(week, end)}</strong>
+              <small>{period === "last-month" ? "Previous calendar month" : "Monday \u2013 Friday"}</small>
             </span>
-            <input
-              type="date"
-              aria-label="Overview week"
-              value={week}
-              onChange={(e) => {
-                if (e.target.value) {
-                  const day = e.target.value;
-                  const weekday = new Date(day + "T00:00:00Z").getUTCDay();
-                  setWeek(shiftDate(day, weekday === 0 ? -6 : 1 - weekday));
-                }
-              }}
-            />
-          </label>
+          </div>
+          <div className="overview-period" role="group" aria-label="Overview period">
+            {[{ value: "current-week", label: "This week" }, { value: "last-week", label: "Last week" }, { value: "2-weeks-ago", label: "2 weeks ago" }, { value: "3-weeks-ago", label: "3 weeks ago" }, { value: "last-month", label: "Last month" }].map(option => (
+              <button type="button" key={option.value} aria-pressed={period === option.value} onClick={() => setPeriod(option.value)}>{option.label}</button>
+            ))}
+          </div>
         </div>
       </div>
       <ErrorLine message={data.error} />
       {data.loading ? (
-        <p role="status">Loading overview...</p>
+        <p role="status">{"Loading overview..."}</p>
       ) : (
         <div className="operations-grid">
           {categories.length ? (
@@ -228,12 +242,14 @@ export function OverviewPanel({
               .map((c) => {
                 const { title, Icon, tone, rank } = presentation(c.name);
                 const hasWeeklyTarget = rank === 0 || rank === 1;
+                const percentage = Math.round((c.quantity / weeklyTarget) * 100);
                 return (
                   <button
-                    className="operation-metric"
+                    className={`operation-metric tone-${tone}`}
                     key={c._id}
-                    onClick={() => open(c)}
+                    onClick={() => open(c, { start: week, end })}
                   >
+                    <svg className="operation-sparkline" viewBox="0 0 140 64" aria-hidden="true"><path d="M0 53 Q18 36 33 41 T64 28 T99 14 T140 4 L140 64 L0 64Z" fill="currentColor" opacity=".08" /><path d="M0 53 Q18 36 33 41 T64 28 T99 14 T140 4" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
                     <span className={`operation-icon ${tone}`}>
                       <Icon size={22} strokeWidth={1.8} />
                     </span>
@@ -243,42 +259,46 @@ export function OverviewPanel({
                         {c.quantity}
                         {hasWeeklyTarget && <small> / {weeklyTarget}</small>}
                       </span>
+                      {rank === 2 && <span className="operation-result-note"><span className="result-good">{"Good"}: {c.goodResults ?? 0}</span><span className="result-bad">{"Bad"}: {c.badResults ?? 0}</span><span className="result-pending">{"Pending"}: {c.pendingResults ?? 0}</span></span>}
                       {hasWeeklyTarget && (
                         <span className="operation-note">
-                          {Math.max(0, weeklyTarget - c.quantity)} remaining |{" "}
-                          {dailyTarget} per day
+                          {Math.max(0, weeklyTarget - c.quantity)} {"remaining"} |{" "}
+                          {dailyTarget} {"per day"}
                         </span>
                       )}
                     </span>
+                    {hasWeeklyTarget && <span className="operation-ring" aria-hidden="true"><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="23" /><circle cx="27" cy="27" r="23" strokeDasharray={`${Math.min(100, percentage) * 1.445} 144.5`} /></svg><strong>{percentage}%</strong></span>}
+                    <span className="operation-progress" aria-hidden="true"><span style={{ width: hasWeeklyTarget ? `${Math.min(100, percentage)}%` : "0%" }} /></span>
                   </button>
                 );
               })
           ) : (
-            <Empty>No work categories are available yet.</Empty>
+            <Empty>{"No work categories are available yet."}</Empty>
           )}
         </div>
       )}
+      {!data.loading && !data.error && <OverviewCharts overview={data.data} week={week} end={end} />}
       <section className="operations-monthly">
-        <div className="eyebrow">WEEKLY FINANCIAL OVERVIEW</div>
-        <h2>{weekLabel(week, end)}</h2>
-        <p>Funds for the selected week.</p>
+        <div className="eyebrow">{"WEEKLY FINANCIAL OVERVIEW"}</div>
+        <h2>{dateLabel(financialWeek, shiftDate(financialWeek, 4))}</h2>
+        <p>{"Funds for the selected week."}</p>
         <ErrorLine message={financial.error} />
         {financial.loading ? (
-          <p role="status">Loading financial report...</p>
+          <p role="status">{"Loading financial report..."}</p>
         ) : financial.error ? null : financial.data ? (
           <>
             <div className="operations-monthly-stats">
               <div>
                 <strong>{money(financial.data.receivedCents)}</strong>
-                <span>Received</span>
+                <span>{"Received"}</span>
               </div>
               <div>
                 <strong>{money(financial.data.balanceCents)}</strong>
-                <span>Balance</span>
+                <span>{"Balance"}</span>
               </div>
               <div>
                 <strong>{money(financial.data.reservedCents)}</strong>
-                <span>Reserved</span>
+                <span>{"Reserved"}</span>
               </div>
             </div>
             {financial.data.budgetSummary && (
@@ -288,9 +308,10 @@ export function OverviewPanel({
             )}
           </>
         ) : (
-          <p>No financial report saved for this week.</p>
+          <p>{"No financial report saved for this week."}</p>
         )}
       </section>
+      <footer className="overview-report-footer"><span>Blue Bug Operations · Management report</span><span>{dateLabel(week, end)}</span></footer>
     </div>
   );
 }

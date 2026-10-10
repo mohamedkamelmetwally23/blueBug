@@ -107,7 +107,7 @@ type Modal =
   | { kind: "deleteCategory"; category: Category }
   | { kind: "work"; task: Task }
   | { kind: "employee"; employee: Employee }
-  | { kind: "category"; category: Category };
+  | { kind: "category"; category: Category; range: { start: string; end: string } };
 function Workspace({ user, logout }: { user: User; logout: () => void }) {
   const [page, setPage] = useState(() => initialPage(user));
   const [revision, setRevision] = useState(0);
@@ -147,7 +147,7 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
     "Financial Reports": CalendarDays,
   };
   return (
-    <div className={`shell ${page === "Overview" ? "operations-shell" : ""}`}>
+    <div className={`shell ${(page === "Overview") ? "operations-shell" : ""}`}>
       <a className="skip" href="#content">
         Skip to content
       </a>
@@ -191,12 +191,12 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
         <header className="topbar">
           <span>
             Workspace <span className="muted">/</span>{" "}
-            <strong>{page === "Overview" ? "Operations" : page}</strong>
+            <strong>{(page === "Overview") ? "Operations" : page}</strong>
           </span>
-          <ThemeToggle />
+          {! (page === "Overview") && <ThemeToggle />}
         </header>
         <div className="page">
-          {page !== "Overview" && (
+          {! (page === "Overview") && (
             <div className="page-heading">
               <div>
                 <div className="eyebrow">
@@ -337,10 +337,11 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
                 )}
               </div>
             )}{" "}
-            {page === "Overview" && (
+            {(page === "Overview") && (
               <OverviewPanel
+                key={page}
                 revision={revision}
-                open={(category) => setModal({ kind: "category", category })}
+                open={(category, range) => setModal({ kind: "category", category, range })}
               />
             )}{" "}
             {page === "Employees" && (
@@ -453,6 +454,7 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
                 employees={employees.data ?? []}
                 employee={false}
                 categoryId={modal.category._id}
+                range={modal.range}
                 open={(task) => setModal({ kind: "work", task })}
                 edit={
                   user.role === "coordinator"
