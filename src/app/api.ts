@@ -66,6 +66,7 @@ export type Employee = {
   statuses: string[];
 };
 export type CategoryStats = Category & {
+  workedDays?: number;
   goodResults?: number;
   badResults?: number;
   pendingResults?: number;

@@ -130,11 +130,6 @@ export function OverviewPanel({
   const previousMonthEnd = shiftDate(monthStart, -1);
   const week = period === "last-month" ? previousMonthEnd.slice(0, 7) + "-01" : shiftDate(current.start, period === "last-week" ? -7 : period === "2-weeks-ago" ? -14 : period === "3-weeks-ago" ? -21 : 0);
   const end = period === "last-month" ? previousMonthEnd : shiftDate(week, 4);
-  let workdays = 0;
-  for (let date = week; date <= end; date = shiftDate(date, 1)) {
-    const day = new Date(date + "T00:00:00Z").getUTCDay();
-    if (day > 0 && day < 6) workdays++;
-  }
   const financialWeek = period === "last-month" ? workingWeek(shiftDate(end, -2)).start : week;
   const data = useData<Overview>(`/overview?from=${week}&to=${end}`, revision);
   const financial = useData<Report | null>(
@@ -241,9 +236,10 @@ export function OverviewPanel({
               .map((c) => {
                 const { title, Icon, tone, rank } = presentation(c.name);
                 const hasWeeklyTarget = rank === 0 || rank === 1;
-                const dailyTarget = rank === 1 ? 4 : 5;
+                const dailyTarget = 5;
+                const workdays = c.workedDays ?? 0;
                 const weeklyTarget = dailyTarget * workdays;
-                const percentage = Math.min(100, Math.max(0, Math.round((c.quantity / weeklyTarget) * 100)));
+                const percentage = Math.min(100, Math.max(0, weeklyTarget > 0 ? Math.round((c.quantity / weeklyTarget) * 100) : 0));
                 return (
                   <button
                     className={`operation-metric tone-${tone}`}
@@ -264,7 +260,7 @@ export function OverviewPanel({
                       {hasWeeklyTarget && (
                         <span className="operation-note">
                           {Math.max(0, weeklyTarget - c.quantity)} {"remaining"} |{" "}
-                          {dailyTarget} {"per day"}
+                          {workdays} {workdays === 1 ? "day" : "days"}
                         </span>
                       )}
                     </span>

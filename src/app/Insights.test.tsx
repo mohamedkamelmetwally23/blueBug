@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within, fireEvent } from "@testing-library/react";
 import { OverviewPanel } from "./Insights";
-const state = vi.hoisted(() => ({ missing: false }));
+const state = vi.hoisted(() => ({ missing: false, emailDays: 4 }));
 vi.mock("./shared", async (original) => ({
   ...(await original<typeof import("./shared")>()),
   useData: (path: string) => ({
@@ -23,6 +23,7 @@ vi.mock("./shared", async (original) => ({
             {
               _id: "email",
               name: "Emails",
+              workedDays: state.emailDays,
               completed: 1,
               quantity: 5,
               tasks: 4,
@@ -30,6 +31,7 @@ vi.mock("./shared", async (original) => ({
             {
               _id: "cat",
               name: "Scripts",
+              workedDays: 5,
               completed: 3,
               quantity: 45,
               tasks: 7,
@@ -53,6 +55,7 @@ vi.mock("./shared", async (original) => ({
 afterEach(() => {
   cleanup();
   state.missing = false;
+  state.emailDays = 4;
 });
 it("shows summed work against the five-day target and financial amounts in dollars", () => {
   render(<OverviewPanel revision={0} open={vi.fn()} />);
@@ -86,6 +89,7 @@ it("shows only Done totals for other categories and keeps the emails target", ()
   const email = screen.getByRole("button", { name: /Emails completed/ });
   expect(within(email).getByText("5").className).toBe("operation-value");
   expect(within(email).getByText("/ 20")).toBeTruthy();
+  expect(within(email).getByText(/4 days/)).toBeTruthy();
 });
 
 it("shows Good and Bad result counts beneath the Action needed value", () => {
@@ -118,4 +122,16 @@ it("caps achievement percentages at 100 when work exceeds the target", () => {
   const card = screen.getByRole("button", { name: /Scripts completed/ });
   expect(within(card).getByText("100%")).toBeTruthy();
   expect(within(card).queryByText("180%")).toBeNull();
+});
+
+it("uses five per worked day for emails and handles no recorded work", () => {
+  state.emailDays = 2;
+  const view = render(<OverviewPanel revision={0} open={vi.fn()} />);
+  const email = screen.getByRole("button", { name: /Emails completed/ });
+  expect(within(email).getByText("/ 10")).toBeTruthy();
+  expect(within(email).getByText(/2 days/)).toBeTruthy();
+  state.emailDays = 0;
+  view.rerender(<OverviewPanel revision={1} open={vi.fn()} />);
+  expect(within(email).getByText("/ 0")).toBeTruthy();
+  expect(within(email).getByText("0%")).toBeTruthy();
 });
