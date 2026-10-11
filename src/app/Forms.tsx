@@ -319,7 +319,7 @@ function LegacyWorkForm({
     version,
   );
   const definition = task.categorySchema;
-  async function mutate(action: () => Promise<unknown>, message: string) {
+  async function mutate(action: () => Promise<unknown>, message: string, closeAfterSave = false) {
     if (busy) return;
     setBusy(true);
     setError("");
@@ -329,6 +329,7 @@ function LegacyWorkForm({
       setVersion((v) => v + 1);
       refresh();
       setNotice(message);
+      if (closeAfterSave) done();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -370,6 +371,7 @@ function LegacyWorkForm({
                     : {}),
                 }),
               "Progress saved.",
+              true,
             );
           }}
         >
@@ -422,7 +424,7 @@ function LegacyWorkForm({
                       : {}),
                   });
                   setStatus("Completed");
-                }, "Task marked Completed.")
+                }, "Task marked Completed.", true)
               }
             >
               <Check size={15} />
@@ -464,9 +466,6 @@ function LegacyWorkForm({
                           ? value === "true"
                           : value;
                 }
-                const submitter = (e.nativeEvent as SubmitEvent)
-                  .submitter as HTMLButtonElement | null;
-                const another = submitter?.value === "another";
                 await mutate(
                   async () => {
                     await api(
@@ -482,16 +481,9 @@ function LegacyWorkForm({
                     setEditing(undefined);
                     setFormKey((k) => k + 1);
                     setPage(1);
-                    if (another)
-                      requestAnimationFrame(() =>
-                        document
-                          .querySelector<HTMLInputElement>(
-                            '[name="identifier"]',
-                          )
-                          ?.focus(),
-                      );
                   },
                   editing ? "Entry updated." : "Entry saved.",
+                  true,
                 );
               }}
             >
@@ -536,9 +528,6 @@ function LegacyWorkForm({
               <div className="actions">
                 <button disabled={busy} value="save">
                   {busy ? "Saving…" : "Save entry"}
-                </button>
-                <button disabled={busy} className="secondary" value="another">
-                  Save & Add Another
                 </button>
                 {editing && (
                   <button

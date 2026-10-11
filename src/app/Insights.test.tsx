@@ -85,7 +85,7 @@ it("shows only Done totals for other categories and keeps the emails target", ()
   expect(within(other).queryByText(/25|remaining|per day/)).toBeNull();
   const email = screen.getByRole("button", { name: /Emails completed/ });
   expect(within(email).getByText("5").className).toBe("operation-value");
-  expect(within(email).getByText("/ 25")).toBeTruthy();
+  expect(within(email).getByText("/ 20")).toBeTruthy();
 });
 
 it("shows Good and Bad result counts beneath the Action needed value", () => {

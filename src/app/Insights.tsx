@@ -135,8 +135,6 @@ export function OverviewPanel({
     const day = new Date(date + "T00:00:00Z").getUTCDay();
     if (day > 0 && day < 6) workdays++;
   }
-  const dailyTarget = 5;
-  const weeklyTarget = dailyTarget * workdays;
   const financialWeek = period === "last-month" ? workingWeek(shiftDate(end, -2)).start : week;
   const data = useData<Overview>(`/overview?from=${week}&to=${end}`, revision);
   const financial = useData<Report | null>(
@@ -243,6 +241,8 @@ export function OverviewPanel({
               .map((c) => {
                 const { title, Icon, tone, rank } = presentation(c.name);
                 const hasWeeklyTarget = rank === 0 || rank === 1;
+                const dailyTarget = rank === 1 ? 4 : 5;
+                const weeklyTarget = dailyTarget * workdays;
                 const percentage = Math.min(100, Math.max(0, Math.round((c.quantity / weeklyTarget) * 100)));
                 return (
                   <button

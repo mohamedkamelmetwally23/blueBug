@@ -7,7 +7,6 @@ export function TaskSheet({
   task,
   writable,
   coordinator,
-  refresh,
   done,
 }: {
   task: Task;
@@ -19,7 +18,6 @@ export function TaskSheet({
   const isActionNeeded = /action\s+needed/i.test(task.categorySchema.name);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   return (
     <>
@@ -44,7 +42,6 @@ export function TaskSheet({
         {task.instructions && <p className="preserve">{task.instructions}</p>}
       </div>
       <form
-        onChange={() => setSaved(false)}
         onSubmit={async (event) => {
           event.preventDefault();
           if (!writable || busy) return;
@@ -70,8 +67,7 @@ export function TaskSheet({
                   )
                 : {}),
             });
-            refresh();
-            setSaved(true);
+            done();
           } catch (error) {
             setError((error as Error).message);
           } finally {
@@ -162,11 +158,6 @@ export function TaskSheet({
           </Field>
         </fieldset>
         <ErrorLine message={error} />
-        {saved && (
-          <p className="notice" role="status">
-            Work details saved.
-          </p>
-        )}
         {writable && (
           <div className="form-actions">
             <button disabled={busy}>

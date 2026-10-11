@@ -16,6 +16,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
+const done = vi.fn();
 function renderTask(name: string, writable = true) {
   return render(
     <TaskSheet
@@ -31,7 +32,7 @@ function renderTask(name: string, writable = true) {
       writable={writable}
       coordinator={false}
       refresh={vi.fn()}
-      done={vi.fn()}
+      done={done}
     />,
   );
 }
@@ -49,6 +50,19 @@ it("restores legacy results and saves independent action needed counts", async (
       expect.objectContaining({ goodCount: 12, badCount: 3, pendingCount: 1 }),
     ),
   );
+});
+it("calls done after a successful save", async () => {
+  vi.mocked(api).mockResolvedValue({});
+  renderTask("Action needed");
+  fireEvent.click(screen.getByRole("button", { name: "Save work details" }));
+  await waitFor(() => expect(done).toHaveBeenCalledOnce());
+});
+it("keeps the form open when saving fails", async () => {
+  vi.mocked(api).mockRejectedValue(new Error("Please retry"));
+  renderTask("Action needed");
+  fireEvent.click(screen.getByRole("button", { name: "Save work details" }));
+  await screen.findByText("Please retry");
+  expect(done).not.toHaveBeenCalled();
 });
 it("does not show result choices for other categories", () => {
   renderTask("Scripts");
