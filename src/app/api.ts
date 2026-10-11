@@ -37,6 +37,9 @@ export type Task = {
   accountNames?: string;
   numDone?: number | null;
   resultStatus?: string;
+  goodCount?: number;
+  badCount?: number;
+  pendingCount?: number;
   categorySchema: Category;
 };
 export type Entry = {

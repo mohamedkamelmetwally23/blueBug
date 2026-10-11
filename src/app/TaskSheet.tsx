@@ -63,7 +63,11 @@ export function TaskSheet({
                   : Number(values.get("numDone")),
               notes: values.get("notes"),
               ...(isActionNeeded
-                ? { resultStatus: values.get("resultStatus") ?? "" }
+                ? Object.fromEntries(
+                    ["goodCount", "badCount", "pendingCount"].map((key) => [
+                      key, Number(values.get(key) || 0),
+                    ]),
+                  )
                 : {}),
             });
             refresh();
@@ -121,18 +125,22 @@ export function TaskSheet({
           {isActionNeeded && (
             <fieldset className="action-result-picker">
               <legend>Result</legend>
-              <div className="actions">
-                {["Good", "Bad", "Pending"].map((result) => (
-                  <label className="checkbox" key={result}>
-                    <input
-                      type="radio"
-                      name="resultStatus"
-                      value={result}
-                      defaultChecked={task.resultStatus === result}
-                    />
-                    {result}
-                  </label>
-                ))}
+              <div className="form-grid">
+                {(["Good", "Bad", "Pending"] as const).map((result) => {
+                  const key = `${result.toLowerCase()}Count` as "goodCount" | "badCount" | "pendingCount";
+                  return (
+                    <Field label={result} key={result}>
+                      <input
+                        type="number"
+                        name={key}
+                        min={0}
+                        max={1000000000}
+                        step={1}
+                        defaultValue={task[key] ?? (task.resultStatus === result ? 1 : 0)}
+                      />
+                    </Field>
+                  );
+                })}
               </div>
             </fieldset>
           )}
