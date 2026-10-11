@@ -35,20 +35,22 @@ export function TaskList({
     categoryId: categoryId ?? "",
     employeeId: employeeId ?? "",
     status: "",
+    result: "",
     weekday: "",
     from: "",
     to: "",
   });
+  const isActionNeeded = /action\s+needed/i.test(categories.find((category) => category._id === filters.categoryId)?.name ?? "");
   const [page, setPage] = useState(1);
   const query = new URLSearchParams({ page: String(page), limit: "20" });
   if (activity) query.set("history", "true");
   Object.entries(filters).forEach(([key, value]) => {
-    if (value) query.set(key, value);
+    if (value && (key !== "result" || isActionNeeded)) query.set(key, value);
   });
   if (range) { query.delete("day"); query.set("from", range.start); query.set("to", range.end); }
   const data = useData<Page<Task>>("/tasks?" + query, revision);
   function filter(key: string, value: string) {
-    setFilters((f) => ({ ...f, [key]: value }));
+    setFilters((f) => ({ ...f, [key]: value, ...(key === "categoryId" ? { result: "" } : {}) }));
     setPage(1);
   }
   return (
@@ -95,6 +97,10 @@ export function TaskList({
             ))}
           </select>
         </Field>
+        {isActionNeeded && <Field label="Result"><select value={filters.result} onChange={(event) => filter("result", event.target.value)}>
+          <option value="">All results</option>
+          {["Good", "Bad", "Pending"].map((result) => <option key={result}>{result}</option>)}
+        </select></Field>}
         {range ? null : activity ? (
           <>
             <Field label="From date">
@@ -133,7 +139,7 @@ export function TaskList({
       ) : (
         <>
           <div className="table-wrap task-table-wrap" role="region" aria-label="Tasks" tabIndex={0}>
-            <table className={`task-sheet-table${(edit && !employee) || (employee && activity) ? " task-table-editable" : ""}`}>
+            <table className={`task-sheet-table${isActionNeeded ? " task-results-table" : ""}${(edit && !employee) || (employee && activity) ? " task-table-editable" : ""}`}>
               <thead>
                 <tr>
                   <th scope="col" className="task-category-col">Task / Category</th>
@@ -142,6 +148,7 @@ export function TaskList({
                   <th scope="col" className="task-date-col">Schedule</th>
                   <th scope="col" className="task-accounts-col">Accounts</th>
                   <th scope="col" className="task-done-col">Done</th>
+                  {isActionNeeded && ["Good", "Bad", "Pending"].map((result) => <th scope="col" className="task-result-col" key={result}>{result}</th>)}
                   <th scope="col" className="task-notes-col">Clarifications</th>
                   <th scope="col" className="task-actions-col">Actions</th>
                 </tr>
@@ -176,6 +183,10 @@ export function TaskList({
                         ? (task.numDone ?? "")
                         : task.actualQuantity}</span>
                     </td>
+                    {isActionNeeded && (["Good", "Bad", "Pending"] as const).map((result) => {
+                      const key = `${result.toLowerCase()}Count` as "goodCount" | "badCount" | "pendingCount";
+                      return <td className="task-result-cell" key={result}><span className={`task-result-count result-${result.toLowerCase()}`}>{task[key] ?? (task.resultStatus === result ? 1 : 0)}</span></td>;
+                    })}
                     <td className="task-cell-text" title={task.notes}>
                       <span className="task-preview">{task.notes || "?"}</span>
                     </td>

@@ -2009,3 +2009,11 @@ td:first-child {
   .drawer-heading-top small { font-size: 8px; letter-spacing: 1px; }
   .drawer-heading h2 { font-size: 19px; }
 }
+
+.task-sheet-table.task-results-table { min-width: 1180px; }
+.task-sheet-table .task-result-col { width: 76px; text-align: center; }
+.task-result-cell { text-align: center; }
+.task-result-count { display: inline-grid; place-items: center; min-width: 32px; min-height: 30px; padding: 4px 8px; border-radius: 9px; font-weight: 700; font-size: 13px; }
+.task-result-count.result-good { background: #e1f5eb; color: #116b46; }
+.task-result-count.result-bad { background: #fee9e7; color: #a12c25; }
+.task-result-count.result-pending { background: #fff3d6; color: #875400; }
