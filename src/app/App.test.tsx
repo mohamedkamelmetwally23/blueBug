@@ -82,7 +82,7 @@ afterEach(() => {
 });
 describe("role workspaces", () => {
   it.each([
-    ["employee", ["My Tasks", "My Activity"]],
+    ["employee", ["My Tasks", "My Activity", "My Issues"]],
     ["manager", ["Overview", "Employees"]],
     ["coordinator", ["Tasks", "Categories", "Employees", "Financial Reports"]],
   ] as const)("renders exact navigation for %s", async (r, names) => {

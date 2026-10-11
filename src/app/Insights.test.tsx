@@ -41,6 +41,8 @@ vi.mock("./shared", async (original) => ({
       : state.missing
         ? null
         : {
+            requiredAccounts: 53,
+            achievedAccounts: 52,
             receivedCents: 12345,
             balanceCents: 6789,
             reservedCents: 1000,
@@ -61,7 +63,12 @@ it("shows summed work against the five-day target and financial amounts in dolla
   expect(screen.getByText("$123.45")).toBeTruthy();
   expect(screen.getByText("$67.89")).toBeTruthy();
   expect(screen.getByText("$10.00")).toBeTruthy();
-  expect(screen.getByText("Next week budget")).toBeTruthy();
+  const summary = screen.getByText("Next week budget");
+  expect(summary.closest("section")?.className).toContain("financial-summary-section");
+  expect(summary.closest(".operations-monthly")).toBeNull();
+  expect(screen.getByText("Required accounts").previousElementSibling?.textContent).toBe("53");
+  expect(screen.getByText("Already achieved").previousElementSibling?.textContent).toBe("52");
+  expect(screen.getByText("Current gap (remaining accounts)").previousElementSibling?.textContent).toBe("1");
 });
 it("explains when no financial report exists", () => {
   state.missing = true;

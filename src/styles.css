@@ -1920,3 +1920,78 @@ td:first-child {
 }
 @media screen and (min-width:1201px) and (max-width:1399px){.operations-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .overview-charts{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-chart:last-child{grid-column:auto}.overview-line-chart{max-height:280px}@media(max-width:760px){.overview-charts{grid-template-columns:minmax(0,1fr)}}@media print{.overview-charts{grid-template-columns:repeat(2,minmax(0,1fr))!important}.overview-line-chart{max-height:39mm}}
+
+.financial-summary-section {
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 4px 20px #102f5005;
+  overflow: hidden;
+}
+.financial-summary-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 28px;
+  border-bottom: 1px solid var(--line);
+}
+.financial-summary-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--brand) 9%, var(--surface));
+  color: var(--brand);
+}
+.financial-summary-heading h3 {
+  margin: 0 0 5px;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+.financial-summary-period { font-size: 12px; color: var(--muted); }
+.financial-summary-content {
+  padding: 24px 28px 28px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+.financial-summary-content p { margin: 0; white-space: pre-wrap; }
+.financial-summary-content p + p { margin-top: 16px; }
+@media (max-width: 540px) {
+  .financial-summary-heading { padding: 18px; gap: 12px; }
+  .financial-summary-content { padding: 18px; font-size: 13px; }
+}
+@media print {
+  .financial-summary-section { box-shadow: none; border-radius: 3mm; }
+  .financial-summary-heading { padding: 3mm; break-after: avoid; }
+  .financial-summary-content { padding: 3mm; font-size: 9px; }
+  .financial-summary-content p { orphans: 3; widows: 3; }
+}
+
+.issues-section { margin-top: 24px; padding: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+.issues-heading { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.issues-heading > div { flex: 1; }
+.issues-heading h2 { margin: 0; font-size: 20px; }
+.issues-heading p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+.issue-list { display: grid; gap: 14px; }
+.issue-card { padding: 20px; border: 1px solid var(--line); border-radius: 12px; }
+.issue-card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.issue-card h3 { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.issue-status { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.issue-status.is-open { background: #fff3d6; color: #875400; }
+.issue-status.is-resolved { background: #e1f5eb; color: #116b46; }
+.issue-description { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.75; font-size: 14px; margin: 14px 0; color: var(--ink); }
+.issue-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
+@media (max-width: 540px) {
+  .issues-section { padding: 18px; }
+  .issues-heading { flex-wrap: wrap; gap: 10px; }
+  .issues-heading > div { min-width: 140px; }
+  .issue-card { padding: 14px; }
+}
+@media print { .issues-section button, .issues-section .pager { display: none; } .issue-card { break-inside: avoid; } }

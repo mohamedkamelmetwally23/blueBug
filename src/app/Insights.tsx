@@ -14,6 +14,7 @@ import {
   Tags,
   ChartNoAxesColumnIncreasing,
 } from "lucide-react";
+import { Issues } from "./Issues";
 import { OverviewCharts } from "./OverviewCharts";
 import { ThemeToggle } from "./ThemeToggle";
 import { shiftDate, weekLabel, workingWeek } from "./weeks";
@@ -278,6 +279,7 @@ export function OverviewPanel({
         </div>
       )}
       {!data.loading && !data.error && <OverviewCharts overview={data.data} week={week} end={end} />}
+      <Issues revision={revision} />
       <section className="operations-monthly">
         <div className="eyebrow">{"WEEKLY FINANCIAL OVERVIEW"}</div>
         <h2>{dateLabel(financialWeek, shiftDate(financialWeek, 4))}</h2>
@@ -287,6 +289,20 @@ export function OverviewPanel({
           <p role="status">{"Loading financial report..."}</p>
         ) : financial.error ? null : financial.data ? (
           <>
+            <div className="operations-monthly-stats">
+              <div>
+                <strong>{financial.data.requiredAccounts}</strong>
+                <span>Required accounts</span>
+              </div>
+              <div>
+                <strong>{financial.data.achievedAccounts}</strong>
+                <span>Already achieved</span>
+              </div>
+              <div>
+                <strong>{Math.max(0, financial.data.requiredAccounts - financial.data.achievedAccounts)}</strong>
+                <span>Current gap (remaining accounts)</span>
+              </div>
+            </div>
             <div className="operations-monthly-stats">
               <div>
                 <strong>{money(financial.data.receivedCents)}</strong>
@@ -301,16 +317,28 @@ export function OverviewPanel({
                 <span>{"Reserved"}</span>
               </div>
             </div>
-            {financial.data.budgetSummary && (
-              <p className="financial-budget-summary">
-                {financial.data.budgetSummary}
-              </p>
-            )}
+
           </>
         ) : (
           <p>{"No financial report saved for this week."}</p>
         )}
       </section>
+      {!financial.loading && !financial.error && financial.data?.budgetSummary && (
+        <section className="financial-summary-section" aria-labelledby="budget-summary-title">
+          <div className="financial-summary-heading">
+            <span className="financial-summary-icon"><ScrollText size={22} aria-hidden="true" /></span>
+            <div>
+              <h3 id="budget-summary-title">Budget summary</h3>
+              <span className="financial-summary-period">{dateLabel(financialWeek, shiftDate(financialWeek, 4))}</span>
+            </div>
+          </div>
+          <div className="financial-summary-content" dir="auto">
+            {financial.data.budgetSummary.split(/\n+/).filter((line) => line.trim()).map((line, index) => (
+              <p key={index}>{line}</p>
+            ))}
+          </div>
+        </section>
+      )}
       <footer className="overview-report-footer"><span>Blue Bug Operations · Management report</span><span>{dateLabel(week, end)}</span></footer>
     </div>
   );

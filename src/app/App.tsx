@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { api, type User, type Category, type Task, type Employee } from "./api";
 import { Brand, ErrorLine, Empty, Drawer, useData } from "./shared";
+import { Issues } from "./Issues";
 import { WeeklyActivity } from "./WeeklyActivity";
 import { workingWeek, weekLabel } from "./weeks";
 import { LoginPage } from "./LoginPage";
@@ -27,13 +28,14 @@ import {
   EmployeeForm,
 } from "./Forms";
 const navigation = {
-  employee: ["My Tasks", "My Activity"],
+  employee: ["My Tasks", "My Activity", "My Issues"],
   manager: ["Overview", "Employees"],
   coordinator: ["Tasks", "Categories", "Employees", "Financial Reports"],
 };
 const routes: Record<string, string> = {
   "My Tasks": "/employee/tasks",
   "My Activity": "/employee/activity",
+  "My Issues": "/employee/issues",
   Overview: "/manager/overview",
   Employees: "/manager/employees",
   Tasks: "/coordinator/tasks",
@@ -140,6 +142,7 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
   const icons: Record<string, typeof ClipboardList> = {
     "My Tasks": ClipboardList,
     "My Activity": CalendarDays,
+    "My Issues": ClipboardList,
     Tasks: ClipboardList,
     Categories: Tags,
     Employees: Users,
@@ -206,6 +209,8 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
                 <p>
                   {page === "My Tasks"
                     ? "Your assigned work. One clear step at a time."
+                    : page === "My Issues"
+                      ? "Report problems and keep their resolution status up to date."
                     : page === "Categories"
                       ? "Define categories for your daily work."
                       : page === "Financial Reports"
@@ -247,6 +252,7 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
             </p>
           )}
           <>
+            {page === "My Issues" && <Issues writable revision={revision} />}
             {page === "My Activity" && (
               <WeeklyActivity
                 revision={revision}
