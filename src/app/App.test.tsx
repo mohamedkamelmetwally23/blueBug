@@ -59,7 +59,7 @@ beforeEach(() => {
             : path.endsWith("/categories")
               ? [task.categorySchema]
               : path.endsWith("/employees")
-                ? []
+                ? [{ _id: "user", name: "Employee", assigned: 1, completed: 0, statuses: [] }]
                 : path.includes("/entries")
                   ? { items: [], total: 0, page: 1, limit: 20 }
                   : path.includes("/overview")
@@ -155,4 +155,18 @@ describe("role workspaces", () => {
     expect(screen.queryByLabelText("Target cost")).toBeNull();
     await waitFor(() => expect(location.pathname).toBe("/coordinator/monthly-financial-report"));
   });
+});
+
+it("returns from task details to the same employee work list", async () => {
+  role = "manager";
+  render(<App />);
+  fireEvent.click(await screen.findByRole("link", { name: "Employees" }));
+  fireEvent.click(await screen.findByRole("button", { name: "View work" }));
+  const view = await screen.findByRole("button", { name: "View details" });
+  fireEvent.click(view);
+  expect(screen.getByRole("dialog").getAttribute("aria-labelledby")).toBe("drawer-title");
+  fireEvent.click(screen.getByRole("button", { name: "Back" }));
+  expect(await screen.findByRole("button", { name: "View details" })).toBe(view);
+  expect(screen.getByRole("dialog")).toBeTruthy();
+  expect(location.pathname).toBe("/manager/employees");
 });

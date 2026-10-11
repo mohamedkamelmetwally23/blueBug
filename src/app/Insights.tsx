@@ -243,7 +243,7 @@ export function OverviewPanel({
               .map((c) => {
                 const { title, Icon, tone, rank } = presentation(c.name);
                 const hasWeeklyTarget = rank === 0 || rank === 1;
-                const percentage = Math.round((c.quantity / weeklyTarget) * 100);
+                const percentage = Math.min(100, Math.max(0, Math.round((c.quantity / weeklyTarget) * 100)));
                 return (
                   <button
                     className={`operation-metric tone-${tone}`}

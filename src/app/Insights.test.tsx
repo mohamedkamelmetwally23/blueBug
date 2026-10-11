@@ -112,3 +112,10 @@ it("filters the overview to last week or the previous calendar month", () => {
     expect(screen.getAllByText(/1 Sept 2026.*30 Sept 2026/).length).toBeGreaterThan(0);
   } finally { cleanup(); vi.useRealTimers(); }
 });
+
+it("caps achievement percentages at 100 when work exceeds the target", () => {
+  render(<OverviewPanel revision={0} open={vi.fn()} />);
+  const card = screen.getByRole("button", { name: /Scripts completed/ });
+  expect(within(card).getByText("100%")).toBeTruthy();
+  expect(within(card).queryByText("180%")).toBeNull();
+});

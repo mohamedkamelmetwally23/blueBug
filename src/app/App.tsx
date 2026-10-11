@@ -107,7 +107,7 @@ type Modal =
   | { kind: "taskForm"; task?: Task }
   | { kind: "categoryForm"; category?: Category }
   | { kind: "deleteCategory"; category: Category }
-  | { kind: "work"; task: Task }
+  | { kind: "work"; task: Task; returnTo?: Extract<Modal, { kind: "employee" | "category" }> }
   | { kind: "employee"; employee: Employee }
   | { kind: "category"; category: Category; range: { start: string; end: string } };
 function Workspace({ user, logout }: { user: User; logout: () => void }) {
@@ -115,6 +115,7 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
   const [revision, setRevision] = useState(0);
   const [modal, setModal] = useState<Modal>();
   const [notice, setNotice] = useState("");
+  const listModal = modal?.kind === "work" ? modal.returnTo : modal;
   const categories = useData<Category[]>("/categories", revision);
   const employees = useData<Employee[]>(
     user.role !== "employee" ? "/employees" : null,
@@ -382,6 +383,7 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
                         ? modal.employee.name
                         : modal.category.name
           }
+          back={modal.kind === "work" && modal.returnTo ? () => setModal(modal.returnTo) : undefined}
           close={() => setModal(undefined)}
         >
           {modal.kind === "employeeForm" && (
@@ -432,43 +434,43 @@ function Workspace({ user, logout }: { user: User; logout: () => void }) {
               done={done}
             />
           )}{" "}
-          {modal.kind === "employee" && (
-            <TaskList
+          {listModal?.kind === "employee" && (
+            <div hidden={modal.kind === "work"}><TaskList
               revision={revision}
               categories={categories.data ?? []}
               employees={[]}
               employee={false}
-              employeeId={modal.employee._id}
-              open={(task) => setModal({ kind: "work", task })}
+              employeeId={listModal.employee._id}
+              open={(task) => setModal({ kind: "work", task, returnTo: listModal })}
               edit={
                 user.role === "coordinator"
                   ? (task) => setModal({ kind: "taskForm", task })
                   : undefined
               }
-            />
+            /></div>
           )}{" "}
-          {modal.kind === "category" && (
-            <>
-              <p>{modal.category.description}</p>
+          {listModal?.kind === "category" && (
+            <div hidden={modal.kind === "work"}>
+              <p>{listModal.category.description}</p>
               <p className="meta">
                 Result classifications:{" "}
-                {modal.category.results.join(", ") || "None configured"}
+                {listModal.category.results.join(", ") || "None configured"}
               </p>
               <TaskList
                 revision={revision}
                 categories={categories.data ?? []}
                 employees={employees.data ?? []}
                 employee={false}
-                categoryId={modal.category._id}
-                range={modal.range}
-                open={(task) => setModal({ kind: "work", task })}
+                categoryId={listModal.category._id}
+                range={listModal.range}
+                open={(task) => setModal({ kind: "work", task, returnTo: listModal })}
                 edit={
                   user.role === "coordinator"
                     ? (task) => setModal({ kind: "taskForm", task })
                     : undefined
                 }
               />
-            </>
+            </div>
           )}
         </Drawer>
       )}

@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type ComponentProps,
 } from "react";
-import { Bug, ClipboardList, X, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Bug, ClipboardList, X, Eye, EyeOff } from "lucide-react";
 import { api } from "./api";
 export function Brand() {
   return (
@@ -126,11 +126,13 @@ export function Badge({ status }: { status: string }) {
 }
 
 export function Drawer({
+  back,
   title,
   close,
   children,
 }: {
   title: string;
+  back?: (() => void) | undefined;
   close: () => void;
   children: ReactNode;
 }) {
@@ -155,8 +157,11 @@ export function Drawer({
       onCancel={close}
     >
       <header>
-        <div>
-          <small>BLUE BUG OPERATIONS</small>
+        <div className="drawer-heading">
+          <div className="drawer-heading-top">
+            {back && <button type="button" className="secondary drawer-back" onClick={back}><ArrowLeft size={16} />Back</button>}
+            <small>BLUE BUG OPERATIONS</small>
+          </div>
           <h2 id="drawer-title">{title}</h2>
         </div>
         <button

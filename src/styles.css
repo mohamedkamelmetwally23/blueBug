@@ -1995,3 +1995,17 @@ td:first-child {
   .issue-card { padding: 14px; }
 }
 @media print { .issues-section button, .issues-section .pager { display: none; } .issue-card { break-inside: avoid; } }
+
+.drawer > header { align-items: flex-start; gap: 16px; }
+.drawer-heading { flex: 1; min-width: 0; }
+.drawer-heading-top { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; min-height: 34px; }
+.drawer-heading-top small { display: block; line-height: 1.5; }
+.drawer .drawer-back { min-height: 34px; padding: 6px 10px; border-radius: 8px; font-size: 12px; gap: 7px; margin: 0; }
+.drawer .drawer-back:hover { background: var(--background); }
+.drawer-heading h2 { margin-top: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+.drawer > header > .icon { flex-shrink: 0; margin-top: 0; }
+@media (max-width: 540px) {
+  .drawer-heading-top { gap: 10px; }
+  .drawer-heading-top small { font-size: 8px; letter-spacing: 1px; }
+  .drawer-heading h2 { font-size: 19px; }
+}
